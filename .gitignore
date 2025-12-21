@@ -1,3 +1,6 @@
 .env
 .node_modules
-/backend/web_repo/node_modules/
+/backend/social_net/node_modules/
+/backend/social_net/dist/
+/frontend/social_net/node_modules/
+/frontend/social_net/.angular/
