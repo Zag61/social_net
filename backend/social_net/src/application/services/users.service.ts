@@ -37,4 +37,23 @@ export class UsersService {
     await this.usersRepo.insert(user);
     return user;
   }
+  async setVerificationToken(userId: string, token: string) {
+  const user = await this.usersRepo.findById(userId);
+if (!user) throw new Error('User not found');
+
+user.verificationToken = token;
+await this.usersRepo.update(user);
+
+}
+
+async verifyByToken(token: string) {
+  const user = await this.usersRepo.findByVerificationToken(token);
+  if (!user) return null;
+
+  user.verified = true;
+  user.verificationToken  = null;
+  await this.usersRepo.update(user);
+  return user;
+}
+
 }

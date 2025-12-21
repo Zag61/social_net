@@ -7,5 +7,8 @@ export interface UserRepository {
   insert(user: User): Promise<void>;
   update(user: User): Promise<void>;
   delete(id: string): Promise<void>;
+  findByVerificationToken(token: string): Promise<User | null>;
+  setVerificationToken(userId: string, token: string): Promise<void>;
+  markVerified(userId: string): Promise<void>;
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

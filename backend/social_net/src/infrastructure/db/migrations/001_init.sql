@@ -32,7 +32,9 @@ CREATE TABLE users (
   about_info     TEXT,
   phone_number   TEXT UNIQUE,
   avatar_file_id UUID,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  verified       BOOLEAN NOT NULL DEFAULT false,
+  verification_token TEXT
 );
 CREATE UNIQUE INDEX idx_users_email_unique ON users(email);
 -- Файлы (hybrid backend = db / minio)

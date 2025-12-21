@@ -10,6 +10,8 @@ export class User {
     public phoneNumber?: string,
     /** reference to file storage entry (infrastructure) */
     public avatarFileId?: UUID,
+    public verified: boolean = false,                 
+    public verificationToken?: string | null,
   ) {}
 
   // identity check

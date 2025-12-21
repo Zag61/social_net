@@ -1,10 +1,11 @@
-// src/application/services/auth.service.ts
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 import { UsersService } from "./users.service";
 import { LoginDto, LoginDtoSchema } from "../dto/user.dto";
 import { User } from "src/domain/entities/user";
+import { randomBytes } from "crypto";
+import nodemailer from 'nodemailer';
 
 @Injectable()
 export class AuthService {
@@ -16,12 +17,13 @@ export class AuthService {
   async login(dto: LoginDto) {
     // 1️⃣ Валидируем входные данные
     const validated = LoginDtoSchema.parse(dto);
-
+    console.log(validated)
     // 2️⃣ Находим пользователя по email
     const user = await this.usersService.findByEmail(validated.email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials, email not found');
-    }
+    console.log(user?.verified)
+    if (!user || !user.verified) {
+  throw new UnauthorizedException('Email not verified or invalid credentials');
+}
     console.log('LOGIN DEBUG', {
       email: validated.email,
       password: validated.password,
@@ -56,4 +58,38 @@ export class AuthService {
     const payload = { sub: user.id, nickname: user.nickname };
     return this.jwtService.sign(payload);
   }
+  
+  async sendVerificationEmail(user: User) {
+  const to = user.email;
+  const token = randomBytes(32).toString('hex');
+  // console.log(token)
+  await this.usersService.setVerificationToken(user.id, token);
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: process.env.SMTP_USER,       // your email
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    },
+  });
+
+  const info = await transporter.sendMail({
+    from: `"MyApp" <${process.env.SMTP_USER}>`,
+    to,
+    subject: 'Verify your email',
+    html: `<p>Click <a href="${process.env.FRONTEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
+  });
+
+  console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+}
+
+
+  async verifyEmail(token: string): Promise<User | null> {
+ const user = await this.usersService.verifyByToken(token);
+    if (!user) return null;
+
+    return user;
+}
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Request, Get, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Req, NotFoundException, Param, BadRequestException } from '@nestjs/common';
 import { AuthService } from 'src/application/services/auth.service';
 import { CreateUserDtoSchema, LoginDtoSchema } from 'src/application/dto/user.dto';
 import type { CreateUserDto, LoginDto } from 'src/application/dto/user.dto';
@@ -14,11 +14,47 @@ export class AuthController {
     private readonly usersService: UsersService
   ) {}
 
+  // @Post('register')
+  // async register(@Body(new ZodValidationPipe(CreateUserDtoSchema)) dto: CreateUserDto) {
+  //   const user = await this.usersService.createUser(dto);
+  //   return { id: user.id, nickname: user.nickname, email: dto.email };
+  // }
   @Post('register')
-  async register(@Body(new ZodValidationPipe(CreateUserDtoSchema)) dto: CreateUserDto) {
-    const user = await this.usersService.createUser(dto);
-    return { id: user.id, nickname: user.nickname, email: dto.email };
+async register(@Body(new ZodValidationPipe(CreateUserDtoSchema)) dto: CreateUserDto) {
+  // 1️⃣ Check if email already exists
+  const existingUser = await this.usersService.findByEmail(dto.email);
+  if (existingUser) {
+    if (!existingUser.verified) {
+      // Optionally resend token
+      await this.authService.sendVerificationEmail(existingUser);
+      return {
+        message: 'Email already registered but not verified. Verification email resent.'
+      };
+    }
+    throw new BadRequestException('Email already in use');
   }
+
+  // 2️⃣ Create user
+  const user = await this.usersService.createUser(dto);
+
+  // 3️⃣ Send verification email
+  await this.authService.sendVerificationEmail(user);
+
+  return { 
+    id: user.id, 
+    nickname: user.nickname, 
+    email: dto.email,
+    message: 'Check your email to verify your account' 
+  };
+}
+ @Get('verify/:token')
+async verifyEmail(@Param('token') token: string) {
+  const user = await this.usersService.verifyByToken(token);
+  if (!user) throw new NotFoundException('Invalid verification token');
+
+  return { message: 'Email verified. You can now log in' };
+}
+
 
   @Post('login')
   async login(@Body(new ZodValidationPipe(LoginDtoSchema)) dto: LoginDto) {
