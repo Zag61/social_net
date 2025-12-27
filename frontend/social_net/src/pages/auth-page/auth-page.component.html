@@ -1,0 +1,38 @@
+<!-- src/app/auth/pages/auth-page/auth-page.component.html -->
+<section class="auth-wrap">
+  <div class="card">
+    <h1>Sign in</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        <span>Email</span>
+        <input type="email" formControlName="email" />
+      </label>
+
+      <label class="password-field">
+        <span>Password</span>
+
+        <div class="password-input">
+          <input [type]="hidePassword ? 'password' : 'text'" formControlName="password" />
+
+          <button type="button" class="toggle-password" (click)="togglePassword()"
+            [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+            {{ hidePassword ? 'Show' : 'Hide' }}
+          </button>
+        </div>
+      </label>
+
+
+      <div class="row">
+        <button type="submit" [disabled]="loading()">Sign in</button>
+        <button type="button" class="ghost" (click)="goRegister()">Register</button>
+      </div>
+
+      <div class="divider">or</div>
+
+      <button type="button" class="google" (click)="onGoogle()">Sign in with Google</button>
+
+      <div *ngIf="error()" class="error">{{ error() }}</div>
+    </form>
+  </div>
+</section>

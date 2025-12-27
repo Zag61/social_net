@@ -1,0 +1,196 @@
+<!-- src/pages/auth-check/auth-check.component.html -->
+<div class="auth-check-container">
+  <header class="header">
+    <h1>🔐 Authentication Status Check</h1>
+    <p class="subtitle">Check if your JWT token is valid and see user data</p>
+  </header>
+
+  <div class="controls">
+    <button 
+      class="btn btn-primary" 
+      (click)="checkAuthorization()" 
+      [disabled]="loading()"
+    >
+      {{ loading() ? 'Checking...' : 'Check Authorization' }}
+    </button>
+    
+    <button 
+      class="btn btn-secondary" 
+      (click)="checkUsingAuthService()"
+      [disabled]="loading()"
+    >
+      Check via AuthService
+    </button>
+    
+    <button 
+      class="btn btn-warning" 
+      (click)="clearAuthData()"
+    >
+      Clear Auth Data
+    </button>
+    
+    <button 
+      class="btn btn-toggle" 
+      [class.active]="autoRefresh()"
+      (click)="toggleAutoRefresh()"
+    >
+      {{ autoRefresh() ? '🔄 Auto-Refresh ON' : 'Auto-Refresh OFF' }}
+    </button>
+  </div>
+
+  <!-- Status Card -->
+  <div class="status-card" [class.authenticated]="isAuthenticated()">
+    <div class="status-header">
+      <span class="status-icon">
+        {{ isAuthenticated() ? '✅' : '❌' }}
+      </span>
+      <h2>
+        {{ isAuthenticated() ? 'Authenticated' : 'Not Authenticated' }}
+      </h2>
+    </div>
+    
+    <div class="status-content">
+      <div class="status-badge" [class.success]="isAuthenticated()">
+        {{ isAuthenticated() ? 'VALID TOKEN' : 'NO VALID TOKEN' }}
+      </div>
+      
+      <div *ngIf="loading()" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Checking authorization...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- User Data Section -->
+  <div *ngIf="userData()" class="data-section">
+    <h3>👤 User Information</h3>
+    <div class="data-grid">
+      <div class="data-item">
+        <span class="label">User ID:</span>
+        <span class="value">{{ userData()?.id }}</span>
+      </div>
+      <div class="data-item">
+        <span class="label">Email:</span>
+        <span class="value">{{ userData()?.email }}</span>
+      </div>
+      <div *ngIf="userData()?.nickname" class="data-item">
+        <span class="label">Nickname:</span>
+        <span class="value">{{ userData()?.nickname }}</span>
+      </div>
+      <div *ngIf="userData()?.createdAt" class="data-item">
+        <span class="label">Account Created:</span>
+        <span class="value">{{ userData()?.createdAt | date:'medium' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Server Response Details -->
+  <div *ngIf="serverResponse()" class="data-section">
+    <h3>📡 Server Response</h3>
+    <div class="code-block">
+      <pre>{{ serverResponse() | json }}</pre>
+    </div>
+  </div>
+
+  <!-- Local Storage Status -->
+  <div class="data-section">
+    <h3>💾 Local Storage Status</h3>
+    <div class="data-grid">
+      <div class="data-item">
+        <span class="label">Has Token:</span>
+        <span class="value" [class.success]="!!authService.getToken()">
+          {{ !!authService.getToken() ? 'YES' : 'NO' }}
+        </span>
+      </div>
+      <div class="data-item">
+        <span class="label">AuthService Status:</span>
+        <span class="value" [class.success]="authService.isAuthenticated()">
+          {{ authService.isAuthenticated() ? 'AUTHENTICATED' : 'NOT AUTHENTICATED' }}
+        </span>
+      </div>
+      <div class="data-item">
+        <span class="label">Token Preview:</span>
+        <span class="value code">
+          {{ authService.getToken() ? (authService.getToken() | slice:0:20) + '...' : 'No token' }}
+        </span>
+      </div>
+    </div>
+    
+    <button 
+      *ngIf="authService.getToken()" 
+      class="btn btn-small btn-secondary"
+      (click)="copyTokenToClipboard()"
+    >
+      📋 Copy Token
+    </button>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error()" class="error-card">
+    <h3>🚨 Error</h3>
+    <p>{{ error() }}</p>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <button 
+      *ngIf="!isAuthenticated()" 
+      class="btn btn-success" 
+      (click)="goToLogin()"
+    >
+      🔑 Go to Login
+    </button>
+    
+    <button 
+      *ngIf="!isAuthenticated()" 
+      class="btn btn-info" 
+      (click)="goToRegister()"
+    >
+      📝 Go to Register
+    </button>
+    
+    <button 
+      *ngIf="isAuthenticated()" 
+      class="btn btn-danger" 
+      (click)="logout()"
+    >
+      🚪 Logout
+    </button>
+    
+    <button 
+      class="btn btn-refresh" 
+      (click)="refreshToken()"
+      [disabled]="loading()"
+    >
+      🔄 Refresh Check
+    </button>
+  </div>
+
+  <!-- Debug Info (toggleable) -->
+  <details class="debug-section">
+    <summary>🛠️ Debug Information</summary>
+    <div class="debug-content">
+      <h4>Local Storage Contents:</h4>
+      <div class="code-block">
+        <pre>{{ checkLocalStorageStatus() | json }}</pre>
+      </div>
+      
+      <h4>Cookies (document.cookie):</h4>
+      <div class="code-block">
+        <pre>{{ document.cookie || 'No cookies found' }}</pre>
+      </div>
+      
+      <h4>Environment:</h4>
+      <div class="data-grid">
+        <div class="data-item">
+          <span class="label">Window Object:</span>
+          <span class="value">{{ typeof window !== 'undefined' ? 'Available' : 'Not available (SSR)' }}</span>
+        </div>
+        <div class="data-item">
+          <span class="label">localStorage:</span>
+          <span class="value">{{ typeof localStorage !== 'undefined' ? 'Available' : 'Not available (SSR)' }}</span>
+        </div>
+      </div>
+    </div>
+  </details>
+</div>

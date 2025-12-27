@@ -24,18 +24,11 @@ export class AuthService {
     if (!user || !user.verified) {
   throw new UnauthorizedException('Email not verified or invalid credentials');
 }
-    console.log('LOGIN DEBUG', {
-      email: validated.email,
-      password: validated.password,
-      hash: user
-    });
-
     // 3️⃣ Сравниваем пароль с хэшем
     const isValid = await bcrypt.compare(validated.password, user.passwordHash);
     if (!isValid) {
       throw new UnauthorizedException('Invalid credentials, wrong password');
     }
-
     // 4️⃣ Возвращаем JWT
     return {
       access_token: this.jwtService.sign({ sub: user.id }),
@@ -79,7 +72,7 @@ export class AuthService {
     from: `"MyApp" <${process.env.SMTP_USER}>`,
     to,
     subject: 'Verify your email',
-    html: `<p>Click <a href="${process.env.FRONTEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
+    html: `<p>Click <a href="${process.env.BACKEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
   });
 
   console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));

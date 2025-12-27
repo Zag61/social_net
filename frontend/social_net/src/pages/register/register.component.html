@@ -1,0 +1,13 @@
+<h1>Register</h1>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <input placeholder="Email" formControlName="email" />
+  <input placeholder="Nickname" formControlName="nickname" />
+  <input type="password" placeholder="Password" formControlName="password" />
+
+  <button type="submit" [disabled]="loading()">Register</button>
+  <button type="button" (click)="back()">Back</button>
+
+  <p *ngIf="message()">{{ message() }}</p>
+  <p *ngIf="error()" class="error">{{ error() }}</p>
+</form>
