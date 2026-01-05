@@ -8,7 +8,7 @@ import { PgUserRepository } from 'src/infrastructure/db/user.repository.pg';
 @Module({
   providers: [
     UsersService,
-    PostgresPoolProvider, // <--- Pool теперь провайдер
+    PostgresPoolProvider,
     {
       provide: USER_REPOSITORY,
       useFactory: (pool) => new PgUserRepository(pool),

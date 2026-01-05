@@ -57,14 +57,21 @@ export class AuthService {
   const token = randomBytes(32).toString('hex');
   // console.log(token)
   await this.usersService.setVerificationToken(user.id, token);
+  // const transporter = nodemailer.createTransport({
+  //   service: 'gmail',
+  //   auth: {
+  //     type: 'OAuth2',
+  //     user: process.env.SMTP_USER,       // your email
+  //     clientId: process.env.GOOGLE_CLIENT_ID,
+  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  //     refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+  //   },
+  // });
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      type: 'OAuth2',
-      user: process.env.SMTP_USER,       // your email
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
   });
 

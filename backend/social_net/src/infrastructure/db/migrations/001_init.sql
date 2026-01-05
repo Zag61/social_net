@@ -8,7 +8,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto"; -- gen_random_uuid()
 
 -- Типы
-CREATE TYPE storage_backend AS ENUM ('db', 'minio');
+CREATE TYPE storage_backend AS ENUM ('db','object_storage'); -- Ceph (RADOS GW), AWS S3, GCS, etc.);
 CREATE TYPE friendship_status AS ENUM ('pending', 'accepted', 'rejected', 'blocked');
 CREATE TYPE like_target AS ENUM ('post', 'comment');
 CREATE TYPE saved_target AS ENUM ('post', 'comment', 'message', 'file', 'channel', 'user', 'other');
@@ -37,14 +37,15 @@ CREATE TABLE users (
   verification_token TEXT
 );
 CREATE UNIQUE INDEX idx_users_email_unique ON users(email);
--- Файлы (hybrid backend = db / minio)
+-- Файлы (hybrid backend = db / object_storage)
 CREATE TABLE files (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id    UUID REFERENCES users(id) ON DELETE SET NULL,
   name        TEXT NOT NULL,
   mime_type   TEXT,
-  backend     storage_backend NOT NULL DEFAULT 'minio',
-  storage_key TEXT,  -- для MinIO/S3 (bucket/key)
+  backend     storage_backend NOT NULL DEFAULT 'object_storage',
+  storage_bucket TEXT,
+  storage_key TEXT,  -- для object_storage
   data        BYTEA, -- для backend='db'
   size_bytes  BIGINT NOT NULL DEFAULT 0,
   metadata    JSONB DEFAULT '{}'::jsonb,
@@ -87,12 +88,12 @@ BEGIN
     IF NEW.size_bytes > db_limit THEN
       RAISE EXCEPTION 'file too large for DB backend (size=% / limit=% bytes)', NEW.size_bytes, db_limit;
     END IF;
-  ELSIF NEW.backend = 'minio' THEN
-    IF NEW.storage_key IS NULL THEN
-      RAISE EXCEPTION 'backend=minio requires storage_key';
+  ELSIF NEW.backend = 'object_storage' THEN
+    IF NEW.storage_key IS NULL OR NEW.storage_bucket IS NULL THEN
+      RAISE EXCEPTION 'backend=object_storage requires storage_key';
     END IF;
     IF NEW.data IS NOT NULL THEN
-      RAISE EXCEPTION 'backend=minio must not have data in DB';
+      RAISE EXCEPTION 'backend=object_storage must not have data in DB';
     END IF;
   ELSE
     RAISE EXCEPTION 'unsupported backend: %', NEW.backend;
