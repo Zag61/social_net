@@ -5,5 +5,5 @@ export interface MessageRepository {
   nextId(): string; // or UUID generator elsewhere
   add(message: Message): Promise<void>;
   // optionally: findById, listByConversation, markRead, etc.
-   getLastBetweenUsers(userA: string, userB: string, limit: number): Promise<Message[]>;
+  getLastBetweenUsers(userA: string, userB: string, limit: number): Promise<Message[]>;
 }

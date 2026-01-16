@@ -33,5 +33,5 @@
 
   <button type="button" class="btn btn-google" (click)="onGoogle()">Sign in with Google</button>
 
-  <div *ngIf="error()" class="error">{{ error() }}</div>
+  @if (error()){<div class="error">{{ error() }}</div>}
 </section>

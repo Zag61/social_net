@@ -1,0 +1,292 @@
+@use 'sass:color';
+@use '../../shared/ui/styles/_variables.scss' as v; // keep your path
+
+$brand: v.$main_color;
+$brand-dark: color.mix(black, $brand, 30%);
+$card-bg: color.mix(white, $brand, 50%);
+$text-dark: color.mix(black, $brand, 85%);
+$text-muted: color.mix(black, $brand, 65%);
+$border-light: color.mix(white, $brand, 60%);
+$accent: color.scale($brand, $lightness: -8%);
+
+:host {
+  box-sizing: border-box;
+  display: block;
+  font-family: v.$main_font;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: inherit; }
+
+// /* Page shell */
+// .messages-page {
+//   min-height: 100vh;
+//   padding: 1rem;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 1rem;
+//   align-items: center;
+//   background: var(--bg, transparent);
+// }
+
+// /* Center card */
+// .chat-card {
+//   width: min(96vw, 920px);
+//   max-height: calc(100vh - 4rem);
+//   background: $card-bg;
+//   border-radius: 12px;
+//   padding: 0.5rem;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 0.5rem;
+//   box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+//   overflow: hidden;
+// }
+
+// /* Header */
+// .chat-header {
+//   display: flex;
+//   align-items: center;
+//   gap: 0.75rem;
+//   padding: 0.75rem;
+//   border-radius: 10px;
+//   background: $brand;
+//   color: color.mix(white, $brand, 90%);
+// }
+
+// .chat-header .avatar {
+//   width: 56px;
+//   height: 56px;
+//   border-radius: 50%;
+//   object-fit: cover;
+//   border: 2px solid color.mix(white, $brand, 85%);
+//   background: white;
+// }
+
+// .chat-header .title {
+//   font-weight: 700;
+//   font-size: 1rem;
+//   margin: 0;
+// }
+// .chat-header .sub {
+//   font-size: .85rem;
+//   color: color.mix(white, $brand, 92%);
+//   margin: 0;
+// }
+
+/* Messages area */
+.messages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  scroll-behavior: smooth;
+}
+
+/* scrollbar (light touch) */
+.messages-container::-webkit-scrollbar { width: 10px; }
+.messages-container::-webkit-scrollbar-track { background: transparent; }
+.messages-container::-webkit-scrollbar-thumb {
+  background: color.mix(white, $brand, 70%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Message bubble */
+.message {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  max-width: 86%;
+  transition: transform .12s ease, opacity .12s ease;
+  animation: fadeIn .14s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Own / other alignment */
+.message.own {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.message.other {
+  align-self: flex-start;
+}
+
+/* Avatar */
+.message .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: white;
+  border: 1px solid $border-light;
+  flex: 0 0 40px;
+}
+
+/* bubble content */
+.bubble {
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  background: white;
+  border: 1px solid $border-light;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* style differences for own messages */
+.message.own .bubble {
+  background: $accent;
+  color: color.mix(white, $accent, 92%);
+  border-color: color.mix(black, $accent, 10%);
+}
+
+/* text and attachments */
+.msg-text {
+  margin: 0;
+  color: $text-dark;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.96rem;
+}
+
+.message.own .msg-text {
+  color: color.mix(white, $accent, 92%);
+}
+
+/* files list */
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 4px;
+}
+
+.file-link {
+  display: inline-block;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  background: color.mix(white, $brand, 85%);
+  border: 1px solid $border-light;
+  text-decoration: none;
+  color: $text-dark;
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.message.own .file-link {
+  background: color.mix(white, $accent, 40%);
+  color: color.mix(white, $accent, 92%);
+}
+
+/* meta row: time / edited */
+.meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: $text-muted;
+  justify-content: flex-end;
+}
+
+/* small pill to show "You" or peer */
+.pill {
+  font-size: 0.72rem;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: color.mix(white, $brand, 78%);
+  color: $text-dark;
+  border: 1px solid $border-light;
+}
+
+/* Composer (input area) */
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-top: 1px dashed color.mix(black, $brand, 92%);
+  align-items: center;
+  background: transparent;
+}
+
+.input {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid $border-light;
+  background: white;
+  font-size: 0.95rem;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+}
+
+/* focus state */
+.input:focus {
+  box-shadow: 0 0 0 4px color.adjust($brand, $lightness: -88%);
+  border-color: $brand-dark;
+}
+
+/* File input + send button */
+.file-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.send-button {
+  background: $brand;
+  color: color.mix(white, $brand, 92%);
+  border: 0;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 84px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+.send-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* small responsive tweaks */
+@media (max-width: 720px) {
+  .chat-card { width: 100%; padding: 0.35rem; }
+  .chat-header .avatar { width: 48px; height: 48px; }
+  .message .avatar { display: none; } /* save space on tiny screens */
+  .message { max-width: 92%; }
+}
+
+@media (max-width: 420px) {
+  .chat-header .title { font-size: 0.95rem; }
+  .composer { padding: 0.45rem; }
+  .send-button { min-width: 64px; padding: 0.45rem 0.6rem; }
+}
+
+/* helper utilities */
+.text-muted { color: $text-muted; font-size: 0.86rem; }
+.center { display: flex; align-items: center; justify-content: center; }
+
+/* Error / empty states */
+.empty {
+  padding: 1rem;
+  text-align: center;
+  color: $text-muted;
+}

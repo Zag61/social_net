@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { UsersService } from "src/application/services/users.service";
-import { PgUserRepository } from "./user.repository.pg";
+import { PgUserRepository } from "../persistence/user.repository.pg";
 
 @Module({
   providers: [

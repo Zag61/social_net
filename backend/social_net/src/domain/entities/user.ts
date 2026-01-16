@@ -12,6 +12,7 @@ export class User {
     public avatarFileId?: UUID,
     public verified: boolean = false,                 
     public verificationToken?: string | null,
+    public createdAt?: string,
   ) {}
 
   // identity check

@@ -41,7 +41,7 @@ export class PgMessageRepository implements MessageRepository {
 
     const insertSql = `
       INSERT INTO messages (
-        id, sender_id, receiver_user_id, receiver_channel_id, text, sent_at, edited_at
+        id, sender_id, receiver_user_id, receiver_channel_id, text_f, sent_at, edited_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
 
@@ -73,7 +73,7 @@ export class PgMessageRepository implements MessageRepository {
    */
   async getLastBetweenUsers(userA: string, userB: string, limit: number): Promise<Message[]> {
     const query = `
-      SELECT id, sender_id, receiver_user_id, receiver_channel_id, text, sent_at, edited_at
+      SELECT id, sender_id, receiver_user_id, receiver_channel_id, text_f, sent_at, edited_at
       FROM messages
       WHERE
         -- only consider user-to-user messages (receiver_user_id IS NOT NULL)
@@ -93,7 +93,7 @@ export class PgMessageRepository implements MessageRepository {
         r.id,
         r.sender_id,
         receiverId,
-        r.text,
+        r.text_f,
         new Date(r.sent_at),
         // r.edited_at ? new Date(r.edited_at) : undefined,
       );
@@ -106,7 +106,7 @@ export class PgMessageRepository implements MessageRepository {
    */
   async getLastInChannel(channelId: string, limit: number): Promise<Message[]> {
     const q = `
-      SELECT id, sender_id, receiver_user_id, receiver_channel_id, text, sent_at, edited_at
+      SELECT id, sender_id, receiver_user_id, receiver_channel_id, text_f, sent_at, edited_at
       FROM messages
       WHERE receiver_channel_id = $1
       ORDER BY sent_at DESC

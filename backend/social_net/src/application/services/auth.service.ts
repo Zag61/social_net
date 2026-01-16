@@ -17,13 +17,11 @@ export class AuthService {
   async login(dto: LoginDto) {
     // 1️⃣ Валидируем входные данные
     const validated = LoginDtoSchema.parse(dto);
-    console.log(validated)
     // 2️⃣ Находим пользователя по email
     const user = await this.usersService.findByEmail(validated.email);
-    console.log(user?.verified)
     if (!user || !user.verified) {
-  throw new UnauthorizedException('Email not verified or invalid credentials');
-}
+      throw new UnauthorizedException('Email not verified or invalid credentials');
+    }
     // 3️⃣ Сравниваем пароль с хэшем
     const isValid = await bcrypt.compare(validated.password, user.passwordHash);
     if (!isValid) {
@@ -31,7 +29,7 @@ export class AuthService {
     }
     // 4️⃣ Возвращаем JWT
     return {
-      access_token: this.jwtService.sign({ sub: user.id }),
+      access_token: this.jwtService.sign({ id: user.id }),
     };
   }
   async validateOAuthLogin(oauthData: { email: string; firstName?: string; lastName?: string; accessToken: string }) {
@@ -51,45 +49,44 @@ export class AuthService {
     const payload = { sub: user.id, nickname: user.nickname };
     return this.jwtService.sign(payload);
   }
-  
+
   async sendVerificationEmail(user: User) {
-  const to = user.email;
-  const token = randomBytes(32).toString('hex');
-  // console.log(token)
-  await this.usersService.setVerificationToken(user.id, token);
-  // const transporter = nodemailer.createTransport({
-  //   service: 'gmail',
-  //   auth: {
-  //     type: 'OAuth2',
-  //     user: process.env.SMTP_USER,       // your email
-  //     clientId: process.env.GOOGLE_CLIENT_ID,
-  //     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  //     refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-  //   },
-  // });
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+    const to = user.email;
+    const token = randomBytes(32).toString('hex');
+    // console.log(token)
+    await this.usersService.setVerificationToken(user.id, token);
+    // const transporter = nodemailer.createTransport({
+    //   service: 'gmail',
+    //   auth: {
+    //     type: 'OAuth2',
+    //     user: process.env.SMTP_USER,       // your email
+    //     clientId: process.env.GOOGLE_CLIENT_ID,
+    //     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    //     refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    //   },
+    // });
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
 
-  const info = await transporter.sendMail({
-    from: `"MyApp" <${process.env.SMTP_USER}>`,
-    to,
-    subject: 'Verify your email',
-    html: `<p>Click <a href="${process.env.BACKEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
-  });
+    const info = await transporter.sendMail({
+      from: `"MyApp" <${process.env.SMTP_USER}>`,
+      to,
+      subject: 'Verify your email',
+      html: `<p>Click <a href="${process.env.BACKEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
+    });
 
-  console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-}
-
+    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+  }
 
   async verifyEmail(token: string): Promise<User | null> {
- const user = await this.usersService.verifyByToken(token);
+    const user = await this.usersService.verifyByToken(token);
     if (!user) return null;
 
     return user;
-}
+  }
 }

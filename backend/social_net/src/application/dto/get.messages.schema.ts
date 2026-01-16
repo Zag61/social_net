@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const GetMessagesSchema = z.object({
-  peerId: z.string().uuid(), // the other participant's user id
+  peerNickname: z.string(), // the other participant's user id
   limit: z.string()
     .optional()
     .transform(val => (val ? Number(val) : undefined))

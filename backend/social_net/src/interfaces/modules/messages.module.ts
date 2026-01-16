@@ -3,7 +3,7 @@ import { MessagesController } from 'src/interfaces/controllers/messages.controll
 import { MessagingService } from 'src/application/services/messaging.service';
 import { MESSAGE_REPOSITORY } from 'src/domain/repositories/message.repository';
 import { POSTGRES_POOL, PostgresPoolProvider } from '../providers/postgres.provider';
-import { UsersModule } from './users.module';
+import { DBModule } from './db.module';
 import { PgMessageRepository } from 'src/infrastructure/persistence/message.repository.pg';
 import { Pool } from 'pg';
 import {  PgFilesRepository } from 'src/infrastructure/persistence/files.repository.pg';
@@ -13,7 +13,7 @@ import { MESSAGE_FILES_REPOSITORY } from 'src/domain/repositories/message-files.
 import { S3Service } from 'src/application/services/s3.service';
 
 @Module({
-  imports: [forwardRef(() => UsersModule)],
+  imports: [forwardRef(() => DBModule)],
   controllers: [MessagesController],
   providers: [
     MessagingService,

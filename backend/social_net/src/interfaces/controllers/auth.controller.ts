@@ -45,8 +45,6 @@ export class AuthController {
     @Body(new ZodValidationPipe(CreateUserDtoSchema)) dto: CreateUserDto,
   ) {
     const existingUser = await this.usersService.findByEmail(dto.email);
-    console.log('here')
-    console.log(existingUser)
     if (existingUser) {
       if (!existingUser.verified) {
         await this.authService.sendVerificationEmail(existingUser);
@@ -57,9 +55,8 @@ export class AuthController {
       }
       throw new BadRequestException('Email already in use');
     }
-console.log('here1')
+    console.log(dto)
     const user = await this.usersService.createUser(dto);
-    console.log('here2')
     await this.authService.sendVerificationEmail(user);
 
     return {

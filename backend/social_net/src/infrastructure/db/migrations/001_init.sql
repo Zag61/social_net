@@ -167,19 +167,19 @@ CREATE TABLE posts (
   author_id           UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   -- владелец/контейнер поста:
   channel_id          UUID REFERENCES channels(id) ON DELETE CASCADE, -- если пост в канале
-  target_user_id      UUID REFERENCES users(id) ON DELETE CASCADE,    -- если пост на личной странице пользователя
-  text                TEXT NOT NULL,
+  -- target_user_id      UUID REFERENCES users(id) ON DELETE CASCADE,    -- если пост на личной странице пользователя
+  text_f              TEXT NOT NULL,
   attachments_present BOOLEAN NOT NULL DEFAULT false,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
   edited_at           TIMESTAMPTZ,
   deleted             BOOLEAN NOT NULL DEFAULT false,
   CONSTRAINT chk_posts_target_oneof CHECK (
-    ((channel_id IS NOT NULL)::int + (target_user_id IS NOT NULL)::int) = 1
+    ((channel_id IS NOT NULL)::int + (author_id IS NOT NULL)::int) = 1
   )
 );
 -- Индексы для быстрого получения ленты: по каналу и по персональной странице
 CREATE INDEX idx_posts_channel_created_at ON posts(channel_id, created_at DESC);
-CREATE INDEX idx_posts_target_user_created_at ON posts(target_user_id, created_at DESC);
+-- CREATE INDEX idx_posts_target_user_created_at ON posts(target_user_id, created_at DESC);
 CREATE INDEX idx_posts_author_created_at ON posts(author_id, created_at DESC);
 CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 
@@ -199,7 +199,7 @@ CREATE TABLE comments (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_id            UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   post_id              UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-  text                 TEXT NOT NULL,
+  text_f                 TEXT NOT NULL,
   answer_to_comment_id UUID, -- ссылка на комментарий того же поста
   has_attached_files   BOOLEAN NOT NULL DEFAULT false,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -247,7 +247,7 @@ CREATE TABLE messages (
   sender_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   receiver_user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
   receiver_channel_id UUID REFERENCES channels(id) ON DELETE CASCADE,
-  text                TEXT NOT NULL,
+  text_f              TEXT NOT NULL,
   sent_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   edited_at           TIMESTAMPTZ,
   deleted             BOOLEAN NOT NULL DEFAULT false,
@@ -288,8 +288,8 @@ CREATE INDEX idx_likes_post ON likes(post_id);
 CREATE INDEX idx_likes_comment ON likes(comment_id);
 
 -- Полнотекстовые индексы
-CREATE INDEX idx_posts_text_tsv ON posts USING gin (to_tsvector('english', coalesce(text, '')));
-CREATE INDEX idx_comments_text_tsv ON comments USING gin (to_tsvector('english', coalesce(text, '')));
+CREATE INDEX idx_posts_text_tsv ON posts USING gin (to_tsvector('english', coalesce(text_f, '')));
+CREATE INDEX idx_comments_text_tsv ON comments USING gin (to_tsvector('english', coalesce(text_f, '')));
 
 -- View: лента канала (показан как пример)
 CREATE VIEW channel_feed AS

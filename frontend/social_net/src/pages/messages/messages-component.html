@@ -1,0 +1,34 @@
+<div class="messages-container">
+  @if (messages(); as msgs) {
+    @for (msg of msgs; track msg.id) {
+
+      <div
+        class="message"
+        [class.own]="isOwnMessage(msg)"
+        [class.other]="!isOwnMessage(msg)"
+      >
+        <div class="content">
+          <div class="text">
+            {{ msg.text || '📎 Attachment' }}
+          </div>
+
+          @if (msg.files.length) {
+            <div class="files">
+              @for (file of msg.files; track file.id) {
+                <a [href]="file.url" target="_blank">
+                  {{ file.name }}
+                </a>
+              }
+            </div>
+          }
+
+          <div class="time">
+            {{ msg.sentAt | date:'shortTime' }}
+          </div>
+        </div>
+
+      </div>
+
+    }
+  }
+</div>

@@ -1,0 +1,164 @@
+@use 'sass:color';
+@use '../../shared/ui/styles/_variables.scss' as v; // keep your path
+
+$brand: v.$main_color;
+$brand-dark: color.mix(black, $brand, 30%);
+$card-bg: color.mix(white, $brand, 50%);
+$text-dark: color.mix(black, $brand, 85%);
+$text-muted: color.mix(black, $brand, 65%);
+$border-light: color.mix(white, $brand, 60%);
+
+:host { box-sizing: border-box; display: block; }
+*, *::before, *::after { box-sizing: inherit; }
+
+.profile-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  font-family: v.$main_font;
+  background: var(--bg, transparent);
+}
+
+/* Re-using your card/auth look */
+.profile-card,
+.auth {
+  width: min(92vw, 920px);
+  padding: 1rem;
+  border-radius: 12px;
+  background: $card-bg;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+/* header area (re-using logo-box) */
+.profile-header,
+.logo-box {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: $brand;
+  color: color.mix(white, $brand, 90%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo-box .avatar,
+.profile-header .avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid color.mix(white, $brand, 85%);
+  background: white;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: color.mix(white, $brand, 95%);
+  font-weight: 700;
+}
+
+.subtitle { margin: 0; font-size: 0.9rem; color: color.mix(white, $brand, 92%); }
+
+.about {
+  margin: 0.25rem 0 0 0;
+  color: color.mix(white, $brand, 92%);
+  font-size: 0.95rem;
+}
+
+/* layout for main content */
+.profile-main {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 1rem;
+
+  @media (max-width: 920px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* friends block (owner-only) */
+.friends-block {
+  background: transparent;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.friend-card {
+  padding: 0.6rem;
+  border-radius: 8px;
+  background: color.mix(white, $brand, 62%);
+  border: 1px solid $border-light;
+}
+
+.friend-name {
+  font-weight: 600;
+  color: $text-dark;
+}
+
+/* posts block */
+.posts-block {
+  grid-column: 1 / -1;
+}
+
+.posts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.post-card {
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid $border-light;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.post-text {
+  margin: 0 0 0.5rem 0;
+  color: $text-dark;
+  font-weight: 500;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: $text-muted;
+}
+
+/* loading */
+.loading {
+  padding: 1rem;
+  text-align: center;
+  color: $text-muted;
+}
+
+/* reuse button styles if needed */
+.btn {
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  min-width: 100px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 420px) {
+  .logo-box .avatar { width: 64px; height: 64px; }
+  .profile-card { padding: 0.85rem; }
+}

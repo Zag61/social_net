@@ -15,9 +15,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   jwtFromRequest: ExtractJwt.fromExtractors([
     ExtractJwt.fromAuthHeaderAsBearerToken(),
      (req) => {
-      console.log('Authorization header:', req.headers.authorization);
-      console.log(req?.headers?.Authorization)
-      console.log(req?.headers)
     const cookie = req?.headers?.cookie;
     if (!cookie) return null;
 
@@ -29,9 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const token = match.split('=')[1];
     if (!token || token.trim() === '') return null;
-
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-// console.log(decoded);
     return token;
     },
   ]),
@@ -40,9 +34,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    console.log(payload)
-    const userId = payload.sub;
+    const userId = payload.id;
     const user = await this.usersService.findById(userId);
+    if (!user) {
+    // no such user -> treat as unauthenticated
+    return null;
+    }
     // Возвращаем минимальный объект пользователя, который попадёт в req.user
     return { id: userId, nickname: user?.nickname ?? null };
   }

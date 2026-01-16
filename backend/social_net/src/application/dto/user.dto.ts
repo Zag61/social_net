@@ -14,3 +14,25 @@ export const LoginDtoSchema = z.object({
 });
 
 export type LoginDto = z.infer<typeof LoginDtoSchema>;
+
+export interface PublicUser {
+  id: string;
+  nickname: string;
+  aboutInfo?: string | null;
+  avatarFileId?: string | null;
+  createdAt: string; // ISO string
+}
+
+export interface PublicData {
+  postsCount: number;
+  friendsCount: number;
+  nickname: string;
+  created_at: string;
+  aboutInfo: string;
+}
+
+export interface OwnerUser extends PublicUser {
+  email: string;
+  phoneNumber?: string | null;
+  verified: boolean;
+}

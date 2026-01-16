@@ -1,0 +1,58 @@
+@if (profile()) {
+  <div class="profile-page">
+    <div class="profile-card auth">
+      <div class="profile-header logo-box">
+        <img class="avatar" src="{{ profile()?._raw?.avatarUrl ?? '/assets/default-avatar.png' }}" alt="avatar" />
+        <h1 class="title">{{ profile()?.nickname }}</h1>
+        @if (profile()?.verified) {
+          <div class="subtitle">Verified</div>
+        }
+        @if (profile()?.aboutInfo) {
+          <p class="about">{{ profile()?.aboutInfo }}</p>
+        }
+      </div>
+
+      <div class="profile-main">
+        <!-- Owner-only block -->
+        @if (profile()?.isOwner) {
+          <section class="friends-block">
+            <h2>Friends</h2>
+
+            @if (profile()?.friends?.length) {
+              <div class="friends-list">
+                @for (friend of profile()?.friends; track friend?.id) {
+                  <div class="friend-card">
+                    <div class="friend-name">{{ friend.nickname ?? friend.name }}</div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="no-friends">No friends yet</p>
+            }
+          </section>
+        }
+
+        <section class="posts-block">
+          <h2>Posts ({{ posts().length }})</h2>
+          @if (posts().length) {
+            <div class="posts">
+              @for (post of posts(); track post.id) {
+                <article class="post-card">
+                  <h3 class="post-text">{{ post.text }}</h3>
+                  <div class="meta">{{ post.createdAt }}</div>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="no-posts">No posts yet</p>
+          }
+        </section>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="profile-page">
+    <div class="profile-card auth">
+      <div class="loading">Loading...</div>
+    </div>
+  </div>}

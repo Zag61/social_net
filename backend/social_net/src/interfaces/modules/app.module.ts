@@ -1,9 +1,10 @@
 // src/app.module.ts
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from './users.module';
+import { DBModule } from './db.module';
 import { AuthModule } from './auth.module';
 import { MessagesModule } from './messages.module';
+import { UsersModule } from './users.module';
 
 @Module({
   imports: [
@@ -11,9 +12,10 @@ import { MessagesModule } from './messages.module';
       isGlobal: true,
       envFilePath: '.env'
     }),
-    UsersModule,
+    DBModule,
     AuthModule,   
     MessagesModule,
+    UsersModule
   ],
 })
 export class AppModule {}
