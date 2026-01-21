@@ -10,6 +10,5 @@ export const messageResolver: ResolveFn<Message[]> = async (
   const userService = inject(UserService);
   const nickname = route.paramMap.get('nickname')!;
   const raw = await firstValueFrom(userService.getMessages(nickname));
-  console.log(raw)
   return raw;
 };

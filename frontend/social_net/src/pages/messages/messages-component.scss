@@ -19,15 +19,6 @@ $accent: color.scale($brand, $lightness: -8%);
 *, *::before, *::after { box-sizing: inherit; }
 
 // /* Page shell */
-// .messages-page {
-//   min-height: 100vh;
-//   padding: 1rem;
-//   display: flex;
-//   flex-direction: column;
-//   gap: 1rem;
-//   align-items: center;
-//   background: var(--bg, transparent);
-// }
 
 // /* Center card */
 // .chat-card {
@@ -74,33 +65,17 @@ $accent: color.scale($brand, $lightness: -8%);
 //   margin: 0;
 // }
 
-/* Messages area */
 .messages-container {
   display: flex;
+  width: 250mm;
+  margin: auto;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 0.75rem;
-  overflow-y: auto;
-  flex: 1 1 auto;
-  scroll-behavior: smooth;
 }
 
-/* scrollbar (light touch) */
-.messages-container::-webkit-scrollbar { width: 10px; }
-.messages-container::-webkit-scrollbar-track { background: transparent; }
-.messages-container::-webkit-scrollbar-thumb {
-  background: color.mix(white, $brand, 70%);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-/* Message bubble */
 .message {
   display: flex;
   gap: 0.6rem;
-  align-items: flex-end;
-  max-width: 86%;
+  max-width: 50%;
   transition: transform .12s ease, opacity .12s ease;
   animation: fadeIn .14s ease;
 }
@@ -110,17 +85,18 @@ $accent: color.scale($brand, $lightness: -8%);
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Own / other alignment */
 .message.own {
+  margin-left: clamp(20vw, 30vw, 50vw);
+  margin-right: 0;
   align-self: flex-end;
-  flex-direction: row-reverse;
 }
 
 .message.other {
+  margin-right: clamp(20vw, 30vw, 50vw);
+  margin-left: 0;
   align-self: flex-start;
 }
 
-/* Avatar */
 .message .avatar {
   width: 40px;
   height: 40px;
@@ -131,11 +107,9 @@ $accent: color.scale($brand, $lightness: -8%);
   flex: 0 0 40px;
 }
 
-/* bubble content */
 .bubble {
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
-  background: white;
   border: 1px solid $border-light;
   box-shadow: 0 4px 10px rgba(0,0,0,0.02);
   display: flex;
@@ -143,28 +117,14 @@ $accent: color.scale($brand, $lightness: -8%);
   gap: 0.35rem;
 }
 
-/* style differences for own messages */
-.message.own .bubble {
-  background: $accent;
-  color: color.mix(white, $accent, 92%);
-  border-color: color.mix(black, $accent, 10%);
+
+.text{
+  backdrop-filter: blur(10px);
+  border: 3px solid $brand;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
 }
 
-/* text and attachments */
-.msg-text {
-  margin: 0;
-  color: $text-dark;
-  font-weight: 500;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-size: 0.96rem;
-}
-
-.message.own .msg-text {
-  color: color.mix(white, $accent, 92%);
-}
-
-/* files list */
 .files {
   display: flex;
   flex-direction: column;
@@ -192,35 +152,6 @@ $accent: color.scale($brand, $lightness: -8%);
   color: color.mix(white, $accent, 92%);
 }
 
-/* meta row: time / edited */
-.meta {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  font-size: 0.78rem;
-  color: $text-muted;
-  justify-content: flex-end;
-}
-
-/* small pill to show "You" or peer */
-.pill {
-  font-size: 0.72rem;
-  padding: 0.18rem 0.45rem;
-  border-radius: 999px;
-  background: color.mix(white, $brand, 78%);
-  color: $text-dark;
-  border: 1px solid $border-light;
-}
-
-/* Composer (input area) */
-.composer {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.6rem;
-  border-top: 1px dashed color.mix(black, $brand, 92%);
-  align-items: center;
-  background: transparent;
-}
 
 .input {
   flex: 1 1 auto;
@@ -233,19 +164,6 @@ $accent: color.scale($brand, $lightness: -8%);
   outline: none;
   resize: none;
   font-family: inherit;
-}
-
-/* focus state */
-.input:focus {
-  box-shadow: 0 0 0 4px color.adjust($brand, $lightness: -88%);
-  border-color: $brand-dark;
-}
-
-/* File input + send button */
-.file-input {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .send-button {
@@ -289,4 +207,46 @@ $accent: color.scale($brand, $lightness: -8%);
   padding: 1rem;
   text-align: center;
   color: $text-muted;
+}
+
+.send-field{
+  align-self: center;
+  width: 100%;
+}
+.send-field .text-input-field{
+  width: 80%;
+  // display: inline-block;
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid $border-light;
+  background: white;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.send-field .file-input-field{
+  display: none;
+}
+
+.file-label {
+  width: 10%;
+  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.file-label:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.file-label img {
+  width: 20px;
+  height: 20px;
 }

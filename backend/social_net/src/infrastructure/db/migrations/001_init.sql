@@ -247,7 +247,7 @@ CREATE TABLE messages (
   sender_id           UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   receiver_user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
   receiver_channel_id UUID REFERENCES channels(id) ON DELETE CASCADE,
-  text_f              TEXT NOT NULL,
+  text_f              TEXT,
   sent_at             TIMESTAMPTZ NOT NULL DEFAULT now(),
   edited_at           TIMESTAMPTZ,
   deleted             BOOLEAN NOT NULL DEFAULT false,

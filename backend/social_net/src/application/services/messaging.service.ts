@@ -28,8 +28,6 @@ export class MessagingService {
   }) {
     const { senderId, receiverId, text, file } = params;
 
-    if (!text || !text.trim()) throw new BadRequestException('Empty message');
-
     const receiver = await this.users.findById(receiverId);
     if (!receiver) throw new NotFoundException('Receiver not found');
 

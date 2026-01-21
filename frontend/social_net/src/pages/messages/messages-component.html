@@ -1,34 +1,54 @@
 <div class="messages-container">
   @if (messages(); as msgs) {
-    @for (msg of msgs; track msg.id) {
+  @for (msg of msgs; track msg.id) {
 
-      <div
-        class="message"
-        [class.own]="isOwnMessage(msg)"
-        [class.other]="!isOwnMessage(msg)"
-      >
-        <div class="content">
-          <div class="text">
-            {{ msg.text || '📎 Attachment' }}
-          </div>
-
-          @if (msg.files.length) {
-            <div class="files">
-              @for (file of msg.files; track file.id) {
-                <a [href]="file.url" target="_blank">
-                  {{ file.name }}
-                </a>
-              }
-            </div>
-          }
-
-          <div class="time">
-            {{ msg.sentAt | date:'shortTime' }}
-          </div>
-        </div>
-
+  <div class="message" [class.own]="isOwnMessage(msg)" [class.other]="!isOwnMessage(msg)">
+    <div class="content">
+      <div class="text bubble">
+        {{ msg.text || '📎 Attachment' }}
       </div>
 
-    }
+      @if (msg.files.length) {
+      <div class="files">
+        @for (file of msg.files; track file.id) {
+        <a [href]="file.url" target="_blank" class="file-link">
+          {{ file.name }}
+        </a>
+        }
+      </div>
+      }
+
+      <div class="time">
+        @if (msg.status === 'sending') {
+        <span class="sending">Sending…</span>
+        }
+        @else if (msg.status === 'failed') {
+        <span class="failed">Failed</span>
+        }
+        @else {
+        {{ msg.sentAt | date:'shortTime' }}
+        }
+      </div>
+
+    </div>
+
+  </div>
+
   }
+  }
+  <form class="send-field" (submit)="sendMessage(); $event.preventDefault()">
+    <input type="text" class="text-input-field" [value]="messageText()" (input)="onTextInput($event)"
+      placeholder="Type a message..." />
+
+    <input type="file" class="file-input-field" id="fileInput" (change)="onFileChange($event)" multiple/>
+
+    <label for="fileInput" class="file-label">
+      <img src="/paper-clip.svg" alt="Attach file" />
+    </label>
+
+    <button class="send-button" type="submit" [disabled]="!canSend()">
+      >
+    </button>
+  </form>
+
 </div>

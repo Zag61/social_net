@@ -24,7 +24,6 @@ export class UsersService {
   }
 
   async createUser(dto: CreateUserDto): Promise<User> {
-    // const validated = CreateUserDtoSchema.parse(dto);
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     console.log(hashedPassword);
     const user = new User(
@@ -58,17 +57,17 @@ export class UsersService {
     await this.usersRepo.update(user);
     return user;
   }
-  async getNicknameById(id:string) : Promise<User | null>{
+  async getNicknameById(id: string): Promise<User | null> {
     return this.usersRepo.findById(id);
   }
-   async getIdByNickname(nick:string) : Promise<string | null>{
+  async getIdByNickname(nick: string): Promise<string | null> {
     return this.usersRepo.getIdByNickname(nick);
   }
-  async getProfileByNickname(nickname: string, requesterId: string|null) {
+  async getProfileByNickname(nickname: string, requesterId: string | null) {
     // console.log(nickname);
     let user = await this.usersRepo.findByNickname(nickname);
     if (user == null) { return null; }
-    else if (user.id !== (requesterId??'')) {
+    else if (user.id !== (requesterId ?? '')) {
       const [recentPosts, publicStats] = await Promise.all([
         this.usersRepo.findPostsByTargetUser(user.id, { limit: 20 }),
         this.usersRepo.getPublicData(user.id)

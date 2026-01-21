@@ -25,10 +25,13 @@ export class MessagesController {
   }))
   async sendMessage(
     @CurrentUser() user: UserPayload,
-    @Body(new ZodValidationPipe(CreateMessageSchema)) dto: { receiverId: string; text: string },
-    @UploadedFile() file?: Express.Multer.File,
+    // @Body(new ZodValidationPipe(CreateMessageSchema)) dto: { receiverNickname: string; text: string },
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body() dto: any,
   ) {
-    const { receiverId, text } = dto;
+    const { receiverNickname, text } = dto;
+    const receiverId = await this.userService.getIdByNickname(receiverNickname);
+    if (receiverId==null) return;
     const result = await this.messaging.sendMessage({
       senderId: user.id,
       receiverId,
@@ -45,14 +48,14 @@ export class MessagesController {
     @Query(new ZodValidationPipe(GetMessagesSchema)) query: unknown,
   ) {
     const { peerNickname, limit } = query as { peerNickname: string; limit: number };
-    console.log(peerNickname, limit)
+    // console.log(peerNickname, limit)
     const peerId =  await this.userService.getIdByNickname(peerNickname);
     const messages = await this.messaging.getConversation(
       user.id,
       peerId ?? '',
       limit,
     );
-    console.log(messages)
+    // console.log(messages)
     return messages.map(m => ({
       id: m.id,
       senderId: m.senderId,
