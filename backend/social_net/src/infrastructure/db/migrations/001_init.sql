@@ -265,7 +265,7 @@ CREATE TABLE message_files (
   file_id    UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
   ord        INT DEFAULT 0,
   attached_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (message_id, file_id)
+  -- UNIQUE (message_id, file_id)
 );
 
 -- Лайки (посты / комментарии)

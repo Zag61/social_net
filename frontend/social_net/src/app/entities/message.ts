@@ -20,5 +20,5 @@ export type MessageStatus = 'sending' | 'sent' | 'failed';
 export interface SendMessageResponse {
   id: string;
   sentAt: string; // or Date if you transform
-  files: string[]
+  files: UploadedFile[]
 }

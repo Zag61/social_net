@@ -20,4 +20,7 @@ export class Message {
   getEditedAt(): Timestamp | undefined {
     return this.editedAt;
   }
+  setEditedAt(): Timestamp | undefined {
+    return this.editedAt;
+  }
 }

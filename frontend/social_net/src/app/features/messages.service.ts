@@ -17,7 +17,7 @@ export class MessagesService {
         formData.append('text', text);
 
         // formData.append('files', files);
-        files.forEach(file => formData.append('file', file));
+        files.forEach(file => formData.append('files', file));
 
         return this.http.post<SendMessageResponse>(
             'http://localhost:3000/messages',

@@ -6,6 +6,8 @@ import { MESSAGE_FILES_REPOSITORY, type MessageFilesRepository } from 'src/domai
 import { S3Service } from './s3.service';
 import xss from 'xss';
 import { Message } from 'src/domain/entities/message';
+import { FileRecord } from 'src/infrastructure/persistence/dao/fileDAO';
+import { UploadedFile } from '../dto/file.dto';
 
 @Injectable()
 export class MessagingService {
@@ -15,7 +17,7 @@ export class MessagingService {
     @Inject(FILES_REPOSITORY) private readonly files: FilesRepository,
     @Inject(MESSAGE_FILES_REPOSITORY) private readonly messageFiles: MessageFilesRepository,
     private readonly s3: S3Service,
-  ) {}
+  ) { }
 
   /** 
    * Send a message, optionally with a file
@@ -24,9 +26,9 @@ export class MessagingService {
     senderId: string;
     receiverId: string;
     text: string;
-    file?: { buffer: Buffer; mimetype: string; originalname: string };
+    files?: { buffer: Buffer; mimetype: string; originalname: string }[];
   }) {
-    const { senderId, receiverId, text, file } = params;
+    const { senderId, receiverId, text, files } = params;
 
     const receiver = await this.users.findById(receiverId);
     if (!receiver) throw new NotFoundException('Receiver not found');
@@ -35,15 +37,29 @@ export class MessagingService {
     const message = new Message(this.messages.nextId(), senderId, receiverId, safeText, new Date());
     await this.messages.add(message);
 
+    let attachedFiles: UploadedFile[] = [];
     // Handle optional file
-    if (file) {
-      const key = `messages/${senderId}/${message.id}_${Date.now()}_${file.originalname}`;
-      const uploaded = await this.s3.uploadFile(key, file.buffer, file.mimetype);
-      const fileRecord = await this.attachFile(uploaded, senderId);
-      await this.linkFileToMessage(message.id, fileRecord.id);
+    if (files && files.length > 0) {
+      // Upload all files in parallel
+      attachedFiles = await Promise.all(
+        files.map(async (file) => {
+          const key = `messages/${senderId}/${message.id}_${Date.now()}_${file.originalname}`;
+          const uploaded = await this.s3.uploadFile(key, file.buffer, file.mimetype);
+          const fileRecord = await this.attachFile(uploaded, senderId);
+          await this.linkFileToMessage(message.id, fileRecord.id);
+          // return fileRecord;
+          const url = await this.s3.getPresignedDownloadUrl(fileRecord.storage_bucket!, fileRecord.storage_key!);
+          return {
+            id: fileRecord.id,
+            name: fileRecord.name,
+            url,
+          };
+        })
+      );
+
     }
 
-    return message;
+    return { message, attachedFiles };
   }
 
   /** 
@@ -68,7 +84,7 @@ export class MessagingService {
 
   /** --- Private helpers --- */
 
-  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string) {
+  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string): Promise<FileRecord> {
     const name = uploaded.storage_key.split('/').pop();
     if (!name) throw new Error('Invalid storage key: cannot determine file name');
 

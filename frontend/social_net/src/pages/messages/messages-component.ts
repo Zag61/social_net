@@ -114,6 +114,7 @@ export class MessagesComponent {
                   id: res.id,
                   sentAt: new Date(res.sentAt),
                   status: 'sent',
+                  files: res.files
                 }
                 : m
             )

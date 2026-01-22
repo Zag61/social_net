@@ -1,5 +1,5 @@
 // src/messages/messages.controller.ts
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/auth.guard';
 import { CreateMessageSchema } from 'src/application/dto/create-message.dto';
 import { MessagingService } from 'src/application/services/messaging.service';
@@ -7,7 +7,7 @@ import { CurrentUser, type UserPayload } from 'src/infrastructure/current-user.d
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import { GetMessagesSchema } from 'src/application/dto/get.messages.schema';
 import { S3Service } from 'src/application/services/s3.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UsersService } from 'src/application/services/users.service';
 
 @UseGuards(JwtAuthGuard)
@@ -20,26 +20,42 @@ export class MessagesController {
   ) { }
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 10 * 1024 * 1024 }, // example: 10 MB
-  }))
+ @UseInterceptors(FilesInterceptor('files', 10, { // <-- 'files' field, max 10 files
+  limits: { fileSize: 10 * 1024 * 1024 *1024}, // 10 MB
+}))
   async sendMessage(
     @CurrentUser() user: UserPayload,
     // @Body(new ZodValidationPipe(CreateMessageSchema)) dto: { receiverNickname: string; text: string },
-    @UploadedFile() file: Express.Multer.File | undefined,
-    @Body() dto: any,
+    @Body() dto: { receiverNickname: string; text: string },
+    @UploadedFiles() files?: Express.Multer.File[],
   ) {
     const { receiverNickname, text } = dto;
     const receiverId = await this.userService.getIdByNickname(receiverNickname);
-    if (receiverId==null) return;
+    if (!receiverId) throw new Error('Receiver not found');
+
+    // Map Multer files to the shape expected by MessagingService
+    const formattedFiles = files?.map(f => ({
+      buffer: f.buffer,
+      mimetype: f.mimetype,
+      originalname: f.originalname,
+    }));
+
     const result = await this.messaging.sendMessage({
       senderId: user.id,
       receiverId,
       text,
-      file, // undefined if none
+      files: formattedFiles,
     });
 
-    return { id: result.id, sentAt: result.sentAt };
+     return {
+      id: result.message.id,
+      senderId: result.message.senderId,
+      receiverId: result.message.receiverId,
+      text: result.message.text,
+      sentAt: result.message.sentAt,
+      editedAt: result.message.getEditedAt,
+      files: result.attachedFiles, // this now includes all uploaded files with {id, name, url}
+    };
   }
 
   @Get()
