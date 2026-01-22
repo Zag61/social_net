@@ -16,7 +16,11 @@ $accent: color.scale($brand, $lightness: -8%);
   -webkit-font-smoothing: antialiased;
 }
 
-*, *::before, *::after { box-sizing: inherit; }
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
 
 // /* Page shell */
 
@@ -81,14 +85,33 @@ $accent: color.scale($brand, $lightness: -8%);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.own {
   margin-left: clamp(20vw, 30vw, 50vw);
   margin-right: 0;
   align-self: flex-end;
+}
+
+.time.own {
+  margin-left: clamp(20vw, 30vw, 50vw);
+  margin-right: 0;
+  align-self: flex-end;
+}
+
+.time.other {
+  margin-right: clamp(20vw, 30vw, 50vw);
+  margin-left: 0;
+  align-self: flex-start;
 }
 
 .message.other {
@@ -111,14 +134,14 @@ $accent: color.scale($brand, $lightness: -8%);
   padding: 0.6rem 0.75rem;
   border-radius: 12px;
   border: 1px solid $border-light;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
 }
 
 
-.text{
+.text {
   backdrop-filter: blur(10px);
   border: 3px solid $brand;
   border-radius: 10px;
@@ -175,7 +198,7 @@ $accent: color.scale($brand, $lightness: -8%);
   font-weight: 700;
   cursor: pointer;
   min-width: 84px;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
 }
 
 .send-button:disabled {
@@ -186,21 +209,52 @@ $accent: color.scale($brand, $lightness: -8%);
 
 /* small responsive tweaks */
 @media (max-width: 720px) {
-  .chat-card { width: 100%; padding: 0.35rem; }
-  .chat-header .avatar { width: 48px; height: 48px; }
-  .message .avatar { display: none; } /* save space on tiny screens */
-  .message { max-width: 92%; }
+  .chat-card {
+    width: 100%;
+    padding: 0.35rem;
+  }
+
+  .chat-header .avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .message .avatar {
+    display: none;
+  }
+
+  /* save space on tiny screens */
+  .message {
+    max-width: 92%;
+  }
 }
 
 @media (max-width: 420px) {
-  .chat-header .title { font-size: 0.95rem; }
-  .composer { padding: 0.45rem; }
-  .send-button { min-width: 64px; padding: 0.45rem 0.6rem; }
+  .chat-header .title {
+    font-size: 0.95rem;
+  }
+
+  .composer {
+    padding: 0.45rem;
+  }
+
+  .send-button {
+    min-width: 64px;
+    padding: 0.45rem 0.6rem;
+  }
 }
 
 /* helper utilities */
-.text-muted { color: $text-muted; font-size: 0.86rem; }
-.center { display: flex; align-items: center; justify-content: center; }
+.text-muted {
+  color: $text-muted;
+  font-size: 0.86rem;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* Error / empty states */
 .empty {
@@ -209,11 +263,12 @@ $accent: color.scale($brand, $lightness: -8%);
   color: $text-muted;
 }
 
-.send-field{
+.send-field {
   align-self: center;
   width: 100%;
 }
-.send-field .text-input-field{
+
+.send-field .text-input-field {
   width: 80%;
   // display: inline-block;
   flex: 1 1 auto;
@@ -227,7 +282,7 @@ $accent: color.scale($brand, $lightness: -8%);
   font-family: inherit;
 }
 
-.send-field .file-input-field{
+.send-field .file-input-field {
   display: none;
 }
 
@@ -249,4 +304,16 @@ $accent: color.scale($brand, $lightness: -8%);
 .file-label img {
   width: 20px;
   height: 20px;
+}
+
+.picture {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.file-video {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
 }

@@ -101,7 +101,7 @@ export class MessagesComponent {
     const files = this.attachedFiles();
     this.messageText.set('');
     this.attachedFiles.set([]);
-    
+
     this.msgSevice
       .sendMessages(this.nickname()!, text, files)
       .subscribe({
@@ -133,4 +133,16 @@ export class MessagesComponent {
 
   }
 
+  isImage(fileName: string) {
+    return /\.(png|jpe?g|gif|webp|svg)$/i.test(fileName);
+  }
+  isVideo(fileName: string) {
+    return /\.(mp4)$/i.test(fileName);
+  }
+  isAudio(fileName: string) {
+    return /\.(wav|mp3)$/i.test(fileName);
+  }
+  getType(fileName:string){
+    return 'video/'+ (fileName.split('.').pop()?.toLowerCase() ?? '');
+  }
 }

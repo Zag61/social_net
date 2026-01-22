@@ -4,9 +4,11 @@
 
   <div class="message" [class.own]="isOwnMessage(msg)" [class.other]="!isOwnMessage(msg)">
     <div class="content">
+      @if(msg.text.length>0){
       <div class="text bubble">
         {{ msg.text || '📎 Attachment' }}
       </div>
+      }
 
       @if (msg.files.length) {
       <div class="files">
@@ -14,11 +16,23 @@
         <a [href]="file.url" target="_blank" class="file-link">
           {{ file.name }}
         </a>
+        @if (isImage(file.name)){
+        <img [src]="file.url" class="picture" />
+        }@else if(isAudio(file.name)){
+        <audio controls>
+          <source [src]="file.url" [type]="getType(file.name)" />
+          Your browser doesn't support audio.
+        </audio>
+        }@else if(isVideo(file.name)){
+        <video controls class="file-video">
+          <source [src]="file.url" />
+        </video>
+        }
         }
       </div>
       }
 
-      <div class="time">
+      <div class="time" [class.own]="isOwnMessage(msg)" [class.other]="!isOwnMessage(msg)">
         @if (msg.status === 'sending') {
         <span class="sending">Sending…</span>
         }
@@ -40,7 +54,7 @@
     <input type="text" class="text-input-field" [value]="messageText()" (input)="onTextInput($event)"
       placeholder="Type a message..." />
 
-    <input type="file" class="file-input-field" id="fileInput" (change)="onFileChange($event)" multiple/>
+    <input type="file" class="file-input-field" id="fileInput" (change)="onFileChange($event)" multiple />
 
     <label for="fileInput" class="file-label">
       <img src="/paper-clip.svg" alt="Attach file" />

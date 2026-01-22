@@ -33,13 +33,11 @@ export class MessagesController {
     const receiverId = await this.userService.getIdByNickname(receiverNickname);
     if (!receiverId) throw new Error('Receiver not found');
 
-    // Map Multer files to the shape expected by MessagingService
     const formattedFiles = files?.map(f => ({
       buffer: f.buffer,
       mimetype: f.mimetype,
-      originalname: f.originalname,
+      originalname:  Buffer.from(f.originalname, 'latin1').toString('utf8'),
     }));
-
     const result = await this.messaging.sendMessage({
       senderId: user.id,
       receiverId,

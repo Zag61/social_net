@@ -263,6 +263,7 @@ CREATE TABLE message_files (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
   file_id    UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  file_name  TEXT NOT NULL,
   ord        INT DEFAULT 0,
   attached_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   -- UNIQUE (message_id, file_id)

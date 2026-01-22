@@ -45,13 +45,13 @@ export class MessagingService {
         files.map(async (file) => {
           const key = `messages/${senderId}/${message.id}_${Date.now()}_${file.originalname}`;
           const uploaded = await this.s3.uploadFile(key, file.buffer, file.mimetype);
-          const fileRecord = await this.attachFile(uploaded, senderId);
+          const fileRecord = await this.attachFile(uploaded, senderId, file.originalname);
           await this.linkFileToMessage(message.id, fileRecord.id);
           // return fileRecord;
           const url = await this.s3.getPresignedDownloadUrl(fileRecord.storage_bucket!, fileRecord.storage_key!);
           return {
             id: fileRecord.id,
-            name: fileRecord.name,
+            name: file.originalname,
             url,
           };
         })
@@ -84,8 +84,8 @@ export class MessagingService {
 
   /** --- Private helpers --- */
 
-  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string): Promise<FileRecord> {
-    const name = uploaded.storage_key.split('/').pop();
+  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string, name: string): Promise<FileRecord> {
+    // const name = uploaded.storage_key.split('/').pop();
     if (!name) throw new Error('Invalid storage key: cannot determine file name');
 
     return this.files.create({
