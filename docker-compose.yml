@@ -23,6 +23,20 @@ services:
     volumes:
       - minio-data:/data
 
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set myminio http://minio:9000 devuser devpass123; do
+        sleep 2;
+      done;
+      mc mb --ignore-existing myminio/social-net-files;
+      mc anonymous set download myminio/social-net-files;
+      exit 0;
+      "
+
 volumes:
   pgdata:
   minio-data:
