@@ -107,6 +107,7 @@ $border-light: color.mix(white, $brand, 60%);
 .friend-name {
   font-weight: 600;
   color: $text-dark;
+  cursor: pointer;
 }
 
 /* posts block */

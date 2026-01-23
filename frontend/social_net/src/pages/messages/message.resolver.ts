@@ -2,6 +2,7 @@ import { inject } from "@angular/core";
 import { ActivatedRouteSnapshot, ResolveFn, RouterStateSnapshot } from "@angular/router";
 import { UserService } from "../../app/features/user.service";
 import { firstValueFrom } from "rxjs";
+import { Message } from "../../app/entities/message";
 
 export const messageResolver: ResolveFn<Message[]> = async (
   route: ActivatedRouteSnapshot,

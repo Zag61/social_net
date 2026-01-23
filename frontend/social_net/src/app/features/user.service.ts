@@ -4,6 +4,7 @@ import { firstValueFrom, Observable } from 'rxjs';
 import { UserDto } from '../entities/user.types';
 import { PostDto } from '../entities/post.types';
 import { InteractionDto } from '../entities/interaction.types';
+import { Message } from '../entities/message';
 
 
 @Injectable({ providedIn: 'root' })

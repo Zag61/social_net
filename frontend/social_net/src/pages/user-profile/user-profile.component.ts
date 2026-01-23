@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -12,6 +12,11 @@ export class UserProfileComponent {
   public data = toSignal<{ user?: ProfileVM } | null>(this.route.data);
   public profile = computed(() => this.data()?.user);
   public posts = computed(() => this.profile()?.posts ?? []);
+  constructor(private router: Router) {}
+
+  goToChat(nickname: string) {
+    this.router.navigate(['/messages', nickname]);
+  }
 }
 
 
@@ -39,8 +44,8 @@ export interface ProfileVM {
   posts: PostVM[];
   friends: any[]; // refine later
   publicStats?: PublicStatsVM | null;
-  // helpful metadata
   isOwner: boolean;
+  avatarUrl?: string,
   _raw?: any;
 }
 

@@ -30,6 +30,7 @@ function normalizeProfile(raw: any): ProfileVM {
       publicStats: null,
       isOwner: true,
       _raw: raw,
+      avatarUrl: raw.avatarUrl
     };
   }
 
@@ -76,6 +77,5 @@ export const AccountResolver: ResolveFn<ProfileVM> = async (
 ) => {
   const userService = inject(UserService);
   const raw = await firstValueFrom(userService.getUserById());
-//   console.log(raw)
   return normalizeProfile(raw);
 };

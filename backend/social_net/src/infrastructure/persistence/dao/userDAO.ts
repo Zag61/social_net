@@ -10,6 +10,7 @@ export const UserRowSchema = z.object({
   avatar_file_id: z.string().nullable().optional(),
   verified: z.boolean().optional(),
   verification_token: z.string().nullable().optional(),
+  avatarUrl: z.string().optional()
 });
 
 export type UserRow = z.infer<typeof UserRowSchema>;

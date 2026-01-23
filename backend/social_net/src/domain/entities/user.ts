@@ -13,6 +13,7 @@ export class User {
     public verified: boolean = false,                 
     public verificationToken?: string | null,
     public createdAt?: string,
+    public avatarUrl?: string
   ) {}
 
   // identity check

@@ -19,7 +19,6 @@ export class UsersController {
    
     if (!user?.nickname) return error; 
     let duh = await this.userService.getProfileByNickname(user.nickname, viewer?.id);
-    console.log(duh)
     return duh;
   }
   

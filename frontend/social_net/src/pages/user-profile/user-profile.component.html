@@ -2,13 +2,13 @@
   <div class="profile-page">
     <div class="profile-card auth">
       <div class="profile-header logo-box">
-        <img class="avatar" src="{{ profile()?._raw?.avatarUrl ?? '/assets/default-avatar.png' }}" alt="avatar" />
+        <img class="avatar" [src]="profile()?.avatarUrl" alt="avatar" />
         <h1 class="title">{{ profile()?.nickname }}</h1>
         @if (profile()?.verified) {
           <div class="subtitle">Verified</div>
         }
         @if (profile()?.aboutInfo) {
-          <p class="about">{{ profile()?.aboutInfo }}</p>
+          <p class="about">{{ profile()?.aboutInfo}}</p>
         }
       </div>
 
@@ -22,7 +22,7 @@
               <div class="friends-list">
                 @for (friend of profile()?.friends; track friend?.id) {
                   <div class="friend-card">
-                    <div class="friend-name">{{ friend.nickname ?? friend.name }}</div>
+                    <div class="friend-name" (click)="goToChat(friend.nickname)">{{ friend.nickname }}</div>
                   </div>
                 }
               </div>

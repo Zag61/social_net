@@ -64,7 +64,6 @@ export class UsersService {
     return this.usersRepo.getIdByNickname(nick);
   }
   async getProfileByNickname(nickname: string, requesterId: string | null) {
-    // console.log(nickname);
     let user = await this.usersRepo.findByNickname(nickname);
     if (user == null) { return null; }
     else if (user.id !== (requesterId ?? '')) {
@@ -78,6 +77,7 @@ export class UsersService {
         nickname: user.nickname,
         about_info: user.aboutInfo,
         avatar_file_id: user.avatarFileId,
+        avatarUrl: user.avatarUrl,
         created_at: user.createdAt,
         publicStats,
         posts: recentPosts.map(p => ({
@@ -90,17 +90,11 @@ export class UsersService {
       };
     } else {
       const [fullUser, posts, friends] = await Promise.all([
-        this.usersRepo.findFullById(user.id),           // includes private columns
+        this.usersRepo.findFullById(user.id),
         this.usersRepo.findPostsByTargetUser(user.id, { limit: 20 }),
-        this.usersRepo.findAcceptedFriends(user.id)     // list of friend user objects
+        this.usersRepo.findAcceptedFriends(user.id)
       ]);
-
-      // Don't return password_hash, verification_token, etc. — filter sensitive fields here.
-
-      return {
-        fullUser, posts, friends
-
-      };
+      return {fullUser, posts, friends};
     }
   }
 }

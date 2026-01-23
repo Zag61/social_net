@@ -1,27 +1,33 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { User } from 'src/domain/entities/user';
 import { UserRepository } from 'src/domain/repositories/user.repository';
 import { UserRow, UserRowSchema } from './dao/userDAO';
 import { PostSummary } from 'src/application/dto/post.dto';
 import { PublicData, PublicUser } from 'src/application/dto/user.dto';
+import { S3Service } from 'src/application/services/s3.service';
+import { POSTGRES_POOL } from 'src/interfaces/providers/postgres.provider';
 @Injectable()
 export class PgUserRepository implements UserRepository {
   private readonly logger = new Logger(PgUserRepository.name);
 
-  constructor(private readonly pool: Pool) { }
+  constructor(
+    private readonly pool: Pool,
+    private readonly s3: S3Service,
+  ) { }
 
   private mapRowToEntity(row: UserRow): User {
     return new User(
       row.id,
       row.email ?? '',
-      row.password_hash??'',
+      row.password_hash ?? '',
       row.nickname,
       row.about_info ?? undefined,
       row.phone_number ?? undefined,
       row.avatar_file_id ?? undefined,
       row.verified ?? false,
-      row.verification_token ?? undefined
+      row.verification_token ?? undefined,
+      row.avatarUrl ?? undefined
     );
   }
 
@@ -49,9 +55,11 @@ export class PgUserRepository implements UserRepository {
     const { rows } = await this.pool.query(q, [nickname]);
     const row = rows[0];
     if (!row) return null;
-
-    const parsed = UserRowSchema.parse(row); // Zod валидация
-    return this.mapRowToEntity(parsed);
+    const parsed = UserRowSchema.parse(row);
+    const user = this.mapRowToEntity(parsed);
+    if (!parsed.avatar_file_id) return user;
+    user.avatarUrl = await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, parsed.avatar_file_id);
+    return user;
   }
 
   async findById(id: string): Promise<User | null> {
@@ -195,7 +203,10 @@ export class PgUserRepository implements UserRepository {
       const row = rows[0];
       if (!row) return null;
       const parsed = UserRowSchema.parse(row);
-      return this.mapRowToEntity(parsed);
+      const user = this.mapRowToEntity(parsed);
+      if (!parsed.avatar_file_id) return user;
+      user.avatarUrl = await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, parsed.avatar_file_id);
+      return user;
     } catch (err) {
       this.logger.error({ msg: 'findFullById failed', id, err });
       throw err;

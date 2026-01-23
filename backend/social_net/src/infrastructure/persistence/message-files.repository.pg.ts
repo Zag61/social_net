@@ -14,7 +14,6 @@ export class PgMessageFilesRepository implements MessageFilesRepository {
   async create(data: Omit<MessageFileEntity, 'id' | 'attached_at'>): Promise<MessageFileEntity> {
     const id = uuidv4();
     const attached_at = new Date();
-
     const query = `
       INSERT INTO message_files (id, message_id, file_id, attached_at)
       VALUES ($1,$2,$3,$4)

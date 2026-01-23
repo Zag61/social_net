@@ -30,6 +30,7 @@ function normalizeProfile(raw: any): ProfileVM {
       publicStats: null,
       isOwner: true,
       _raw: raw,
+      avatarUrl: fu.avatarUrl
     };
   }
 

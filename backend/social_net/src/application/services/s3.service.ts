@@ -25,7 +25,7 @@ export class S3Service {
     );
     return { storage_bucket: BUCKET, storage_key: key };
   }
-async getPresignedDownloadUrl(
+  async getPresignedDownloadUrl(
     bucket: string,
     key: string,
     expiresSeconds = 3600,
@@ -35,7 +35,7 @@ async getPresignedDownloadUrl(
       new GetObjectCommand({ Bucket: bucket, Key: key }),
       { expiresIn: expiresSeconds },
     );
-}
+  }
   async downloadFile(key: string): Promise<Buffer> {
     const resp = await this.s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
     const stream = resp.Body as Readable;

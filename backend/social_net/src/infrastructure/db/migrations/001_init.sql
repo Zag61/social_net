@@ -31,7 +31,7 @@ CREATE TABLE users (
   nickname       TEXT NOT NULL UNIQUE,
   about_info     TEXT,
   phone_number   TEXT UNIQUE,
-  avatar_file_id UUID,
+  avatar_file_id TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   verified       BOOLEAN NOT NULL DEFAULT false,
   verification_token TEXT
@@ -108,8 +108,8 @@ BEFORE INSERT OR UPDATE ON files
 FOR EACH ROW EXECUTE FUNCTION trg_files_validate_and_fill();
 
 -- Связь avatar_file_id -> files(id)
-ALTER TABLE users
-  ADD CONSTRAINT fk_users_avatar_file FOREIGN KEY (avatar_file_id) REFERENCES files(id) ON DELETE SET NULL;
+-- ALTER TABLE users
+--   ADD CONSTRAINT fk_users_avatar_file FOREIGN KEY (avatar_file_id) REFERENCES files(id) ON DELETE SET NULL;
 
 -- Каналы и подписки
 CREATE TABLE channels (
@@ -263,9 +263,9 @@ CREATE TABLE message_files (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
   file_id    UUID NOT NULL REFERENCES files(id) ON DELETE CASCADE,
-  file_name  TEXT NOT NULL,
+  file_name  TEXT,
   ord        INT DEFAULT 0,
-  attached_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attached_at TIMESTAMPTZ NOT NULL DEFAULT now()
   -- UNIQUE (message_id, file_id)
 );
 

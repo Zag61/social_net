@@ -23,7 +23,7 @@ export class InMemoryMessageFilesRepository implements MessageFilesRepository {
   async create(data: Omit<MessageFileEntity, 'id' | 'attached_at'>) {
     const rec: MessageFileEntity = {
       ...data,
-      id: uuidv4(),
+      id: uuidv4(), 
       attached_at: new Date(),
     };
     this.records.push(rec);
