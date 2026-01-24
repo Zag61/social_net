@@ -3,7 +3,7 @@ import { ZodType, ZodError, treeifyError } from 'zod';
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private schema: ZodType<any>) {} 
+  constructor(private schema: ZodType<any>) { }
 
   transform(value: unknown) {
     try {

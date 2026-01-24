@@ -1,4 +1,3 @@
-// src/interfaces/modules/users.module.ts
 import { Module } from '@nestjs/common';
 import { UsersService } from 'src/application/services/users.service';
 import { USER_REPOSITORY } from 'src/domain/repositories/user.repository';
@@ -9,16 +8,9 @@ import { Pool } from 'pg';
 
 @Module({
   providers: [
-    UsersService,
     PostgresPoolProvider,
     S3Service,
-    {
-      provide: USER_REPOSITORY,
-      useFactory: (pool: Pool, s3: S3Service) =>
-        new PgUserRepository(pool, s3),
-      inject: [POSTGRES_POOL, S3Service],
-    },
   ],
-  exports: [UsersService, USER_REPOSITORY],
+  exports: [POSTGRES_POOL, S3Service],
 })
-export class DBModule {}
+export class DBModule { }

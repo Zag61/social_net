@@ -11,9 +11,10 @@ import {  PgMessageFilesRepository } from 'src/infrastructure/persistence/messag
 import { FILES_REPOSITORY } from 'src/domain/repositories/files.repository';
 import { MESSAGE_FILES_REPOSITORY } from 'src/domain/repositories/message-files.repository';
 import { S3Service } from 'src/application/services/s3.service';
+import { UsersModule } from './users.module';
 
 @Module({
-  imports: [forwardRef(() => DBModule)],
+  imports: [forwardRef(() => DBModule), UsersModule],
   controllers: [MessagesController],
   providers: [
     MessagingService,
