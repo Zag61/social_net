@@ -20,5 +20,9 @@ export interface UserRepository {
   findPostsByTargetUser(userId: string, limit?: number, indent?: number): Promise<PostDto[]>;
   getIdByNickname(nickname: string): Promise<string | null>;
   getFriendsIds(userId: string): Promise<string[]>;
+  getFriendsInfo(userIds: string[]): Promise<User[] | null>;
+  getUsersByNickname(nickname?: string): Promise<User[] | null>;
+  createFriendRequest(requesterId: string, addresseeId: string): Promise<void>;
+  deleteFriendship(userAId: string, userBId: string): Promise<void>;
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

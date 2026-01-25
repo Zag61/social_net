@@ -30,15 +30,15 @@ export class PgUserRepository implements UserRepository {
       row.avatarUrl ?? undefined
     );
   }
-  
+
   private async attachFiles(posts: PostDto[]) {
-  const postsWithFiles = posts.filter(p => p.attachmentsPresent);
-  console.log(postsWithFiles)
-  if (!postsWithFiles.length) return;
+    const postsWithFiles = posts.filter(p => p.attachmentsPresent);
+    console.log(postsWithFiles)
+    if (!postsWithFiles.length) return;
 
-  const postIds = postsWithFiles.map(p => p.id);
+    const postIds = postsWithFiles.map(p => p.id);
 
-  const q = `
+    const q = `
     SELECT
       pf.post_id,
       f.id AS file_id,
@@ -51,32 +51,32 @@ export class PgUserRepository implements UserRepository {
     ORDER BY pf.post_id, pf.ord;
   `;
 
-  const { rows } = await this.pool.query(q, [postIds]);
+    const { rows } = await this.pool.query(q, [postIds]);
 
-  const byPostId = new Map<string, UploadedFile[]>();
+    const byPostId = new Map<string, UploadedFile[]>();
 
-  for (const r of rows) {
-    const url = await this.s3.getPresignedDownloadUrl(
-      r.storage_bucket,
-      r.storage_key,
-    );
+    for (const r of rows) {
+      const url = await this.s3.getPresignedDownloadUrl(
+        r.storage_bucket,
+        r.storage_key,
+      );
 
-    const file: UploadedFile = {
-      id: r.file_id,
-      name: r.name,
-      url,
-    };
+      const file: UploadedFile = {
+        id: r.file_id,
+        name: r.name,
+        url,
+      };
 
-    if (!byPostId.has(r.post_id)) {
-      byPostId.set(r.post_id, []);
+      if (!byPostId.has(r.post_id)) {
+        byPostId.set(r.post_id, []);
+      }
+      byPostId.get(r.post_id)!.push(file);
     }
-    byPostId.get(r.post_id)!.push(file);
-  }
 
-  for (const post of postsWithFiles) {
-    post.attachmentsurls = byPostId.get(post.id) ?? [];
+    for (const post of postsWithFiles) {
+      post.attachmentsurls = byPostId.get(post.id) ?? [];
+    }
   }
-}
 
 
   async findByEmail(email: string): Promise<User | null> {
@@ -378,6 +378,170 @@ export class PgUserRepository implements UserRepository {
       return rows.map((r: any) => r.id);
     } catch (err) {
       this.logger.error({ msg: 'getFriendsIds failed', userId, err });
+      throw err;
+    }
+  }
+
+  async getFriendsInfo(userIds: string[]): Promise<User[] | null> {
+    if (userIds.length === 0) return null;
+
+    const placeholders = userIds.map((_, i) => `$${i + 1}`).join(', ');
+
+    const q = `
+    SELECT id, nickname, avatar_file_id
+    FROM users
+    WHERE id IN (${placeholders})
+  `;
+
+    try {
+      const { rows } = await this.pool.query(q, userIds);
+      if (rows.length === 0) return null;
+
+      const users: User[] = await Promise.all(
+        rows.map(async (row) => {
+          const user = new User(
+            row.id,
+            '',           // email not fetched
+            '',           // passwordHash not fetched
+            row.nickname,
+            undefined,    // aboutInfo
+            undefined,    // phoneNumber
+            row.avatar_file_id,
+            false,        // verified
+            undefined,    // verificationToken
+            undefined     // createdAt
+          );
+
+          if (row.avatar_file_id) {
+            user.avatarUrl = await this.s3.getPresignedDownloadUrl(
+              process.env.S3_BUCKET!,
+              row.avatar_file_id
+            );
+          }
+
+          return user;
+        })
+      );
+
+      return users;
+    } catch (err) {
+      this.logger.error({ msg: 'getFriendsInfo failed', userIds, err });
+      throw err;
+    }
+  }
+
+  async getUsersByNickname(nickname?: string): Promise<User[] | null> {
+    try {
+      let q = `
+      SELECT id, nickname, avatar_file_id
+      FROM users
+    `;
+      const params: string[] = [];
+
+      if (nickname) {
+        q += ` WHERE nickname ILIKE $1`;
+        params.push(`%${nickname}%`);
+      }
+
+      q += ` ORDER BY nickname ASC LIMIT 50`;
+
+      const { rows } = await this.pool.query(q, params);
+
+      if (rows.length === 0) return null;
+
+      const users: User[] = await Promise.all(
+        rows.map(async (row) => {
+          const user = new User(
+            row.id,
+            '',           // email not fetched
+            '',           // passwordHash not fetched
+            row.nickname,
+            undefined,    // aboutInfo
+            undefined,    // phoneNumber
+            row.avatar_file_id,
+            false,        // verified
+            undefined,    // verificationToken
+            undefined     // createdAt
+          );
+
+          if (row.avatar_file_id) {
+            user.avatarUrl = await this.s3.getPresignedDownloadUrl(
+              process.env.S3_BUCKET!,
+              row.avatar_file_id
+            );
+          }
+
+          return user;
+        })
+      );
+
+      return users;
+    } catch (err) {
+      this.logger.error({ msg: 'getUsersByNickname failed', nickname, err });
+      throw err;
+    }
+  }
+
+  /**
+   * Create friend request. If a friendship record already exists:
+   *  - if status = 'pending' -> throw (already pending)
+   *  - if status = 'accepted' -> throw (already friends)
+   *  - otherwise (e.g. 'rejected' / custom) -> update to 'pending'
+   */
+  async createFriendRequest(requesterId: string, addresseeId: string): Promise<void> {
+    try {
+      const checkQ = `
+      SELECT id, status
+      FROM friendships
+      WHERE (requester_id = $1 AND addressee_id = $2)
+         OR (requester_id = $2 AND addressee_id = $1)
+      LIMIT 1
+    `;
+      const { rows: existing } = await this.pool.query(checkQ, [requesterId, addresseeId]);
+
+      if (existing.length > 0) {
+        const row = existing[0];
+        const status: string = row.status;
+
+        if (status === 'pending') {
+          throw new Error('Friend request already exists');
+        }
+        if (status === 'accepted') {
+          throw new Error('Users are already friends');
+        }
+
+        // If exists but not pending/accepted (e.g. rejected) — update to pending
+        const updQ = `
+        UPDATE friendships
+        SET requester_id = $1, addressee_id = $2, status = 'pending', updated_at = now()
+        WHERE id = $3
+      `;
+        await this.pool.query(updQ, [requesterId, addresseeId, row.id]);
+        return;
+      }
+
+      // Insert new pending friendship
+      const insertQ = `
+      INSERT INTO friendships (requester_id, addressee_id, status)
+      VALUES ($1, $2, 'pending')
+    `;
+      await this.pool.query(insertQ, [requesterId, addresseeId]);
+    } catch (err) {
+      this.logger.error({ msg: 'createFriendRequest failed', requesterId, addresseeId, err });
+      throw err;
+    }
+  }
+
+  async deleteFriendship(userAId: string, userBId: string): Promise<void> {
+    try {
+      const q = `
+      DELETE FROM friendships
+      WHERE (requester_id = $1 AND addressee_id = $2)
+         OR (requester_id = $2 AND addressee_id = $1)
+    `;
+      await this.pool.query(q, [userAId, userBId]);
+    } catch (err) {
+      this.logger.error({ msg: 'deleteFriendship failed', userAId, userBId, err });
       throw err;
     }
   }

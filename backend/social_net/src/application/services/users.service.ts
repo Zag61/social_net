@@ -7,7 +7,6 @@ import { User } from 'src/domain/entities/user';
 import { v4 as uuidv4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { CreateUserDto } from '../dto/user.dto';
-import { PostDto } from '../dto/post.dto';
 
 @Injectable()
 export class UsersService {
@@ -98,7 +97,6 @@ export class UsersService {
       return { fullUser, posts, friends };
     }
   }
-
   /* timeBackStep - how much user clicked load more, so method returns older posts */
   async getFeed(user: User, timeBackStep: number) {
     const friendsIds = await this.usersRepo.getFriendsIds(user.id);
@@ -114,5 +112,27 @@ export class UsersService {
     );
 
     return postsPerFriend.flat();
+  }
+
+  async getFriends(userId: string) {
+    const friendsIds = await this.usersRepo.getFriendsIds(userId);
+    return this.usersRepo.getFriendsInfo(friendsIds);
+  }
+  async getPeople(nickname?: string) {
+    return this.usersRepo.getUsersByNickname(nickname);
+  }
+
+  async sendFriendRequest(requesterId: string, addresseeId: string): Promise<{ success: boolean; message?: string }> {
+    if (requesterId === addresseeId) {
+      return { success: false, message: 'Cannot send friend request to yourself' };
+    }
+
+    await this.usersRepo.createFriendRequest(requesterId, addresseeId);
+    return { success: true };
+  }
+
+  async removeFriend(userId: string, otherId: string): Promise<{ success: boolean }> {
+    await this.usersRepo.deleteFriendship(userId, otherId);
+    return { success: true };
   }
 }
