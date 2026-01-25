@@ -3,10 +3,10 @@ import { Pool } from 'pg';
 import { User } from 'src/domain/entities/user';
 import { UserRepository } from 'src/domain/repositories/user.repository';
 import { UserRow, UserRowSchema } from './dao/userDAO';
-import { PostSummary } from 'src/application/dto/post.dto';
+import { PostDto } from 'src/application/dto/post.dto';
 import { PublicData, PublicUser } from 'src/application/dto/user.dto';
 import { S3Service } from 'src/application/services/s3.service';
-import { POSTGRES_POOL } from 'src/interfaces/providers/postgres.provider';
+import { UploadedFile } from 'src/application/dto/file.dto';
 @Injectable()
 export class PgUserRepository implements UserRepository {
   private readonly logger = new Logger(PgUserRepository.name);
@@ -30,6 +30,54 @@ export class PgUserRepository implements UserRepository {
       row.avatarUrl ?? undefined
     );
   }
+  
+  private async attachFiles(posts: PostDto[]) {
+  const postsWithFiles = posts.filter(p => p.attachmentsPresent);
+  console.log(postsWithFiles)
+  if (!postsWithFiles.length) return;
+
+  const postIds = postsWithFiles.map(p => p.id);
+
+  const q = `
+    SELECT
+      pf.post_id,
+      f.id AS file_id,
+      f.name,
+      f.storage_bucket,
+      f.storage_key
+    FROM post_files pf
+    JOIN files f ON f.id = pf.file_id
+    WHERE pf.post_id = ANY($1)
+    ORDER BY pf.post_id, pf.ord;
+  `;
+
+  const { rows } = await this.pool.query(q, [postIds]);
+
+  const byPostId = new Map<string, UploadedFile[]>();
+
+  for (const r of rows) {
+    const url = await this.s3.getPresignedDownloadUrl(
+      r.storage_bucket,
+      r.storage_key,
+    );
+
+    const file: UploadedFile = {
+      id: r.file_id,
+      name: r.name,
+      url,
+    };
+
+    if (!byPostId.has(r.post_id)) {
+      byPostId.set(r.post_id, []);
+    }
+    byPostId.get(r.post_id)!.push(file);
+  }
+
+  for (const post of postsWithFiles) {
+    post.attachmentsurls = byPostId.get(post.id) ?? [];
+  }
+}
+
 
   async findByEmail(email: string): Promise<User | null> {
     const q = `
@@ -217,24 +265,29 @@ export class PgUserRepository implements UserRepository {
    * Get latest posts published on user's personal page (target_user_id = userId).
    * Options: { limit }
    */
-  async findPostsByTargetUser(userId: string, opts?: { limit?: number }): Promise<PostSummary[]> {
-    const limit = opts?.limit ?? 20;
+  async findPostsByTargetUser(userId: string, limit: number = 20, offset: number = 0): Promise<PostDto[]> {
     const q = `
       SELECT id, author_id, text_f, attachments_present, created_at
       FROM posts
       WHERE author_id = $1 AND deleted = false
       ORDER BY created_at DESC
       LIMIT $2
+      OFFSET $3;
     `;
     try {
-      const { rows } = await this.pool.query(q, [userId, limit]);
-      return rows.map((r: any) => ({
+      const { rows } = await this.pool.query(q, [userId, limit, offset]);
+      console.log(rows)
+      const posts: PostDto[] = rows.map((r: any) => ({
         id: r.id,
         authorId: r.author_id,
         text: r.text_f,
         attachmentsPresent: r.attachments_present,
-        createdAt: r.created_at
+        createdAt: r.created_at,
+        attachmentsurls: [],
       }));
+
+      await this.attachFiles(posts);
+      return posts;
     } catch (err) {
       this.logger.error({ msg: 'findPostsByTargetUser failed', userId, err });
       throw err;
@@ -308,4 +361,24 @@ export class PgUserRepository implements UserRepository {
     }
   }
 
+  async getFriendsIds(userId: string): Promise<string[]> {
+    const q = `
+      SELECT
+        CASE
+          WHEN requester_id = $1 THEN addressee_id
+          ELSE requester_id
+        END AS id
+      FROM friendships
+      WHERE status = 'accepted'
+        AND ($1 = requester_id OR $1 = addressee_id);
+    `;
+
+    try {
+      const { rows } = await this.pool.query(q, [userId]);
+      return rows.map((r: any) => r.id);
+    } catch (err) {
+      this.logger.error({ msg: 'getFriendsIds failed', userId, err });
+      throw err;
+    }
+  }
 }

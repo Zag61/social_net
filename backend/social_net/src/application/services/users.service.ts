@@ -7,6 +7,7 @@ import { User } from 'src/domain/entities/user';
 import { v4 as uuidv4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { CreateUserDto } from '../dto/user.dto';
+import { PostDto } from '../dto/post.dto';
 
 @Injectable()
 export class UsersService {
@@ -68,7 +69,7 @@ export class UsersService {
     if (user == null) { return null; }
     else if (user.id !== (requesterId ?? '')) {
       const [recentPosts, publicStats] = await Promise.all([
-        this.usersRepo.findPostsByTargetUser(user.id, { limit: 20 }),
+        this.usersRepo.findPostsByTargetUser(user.id, 20),
         this.usersRepo.getPublicData(user.id)
       ]);
 
@@ -91,10 +92,27 @@ export class UsersService {
     } else {
       const [fullUser, posts, friends] = await Promise.all([
         this.usersRepo.findFullById(user.id),
-        this.usersRepo.findPostsByTargetUser(user.id, { limit: 20 }),
+        this.usersRepo.findPostsByTargetUser(user.id, 20),
         this.usersRepo.findAcceptedFriends(user.id)
       ]);
-      return {fullUser, posts, friends};
+      return { fullUser, posts, friends };
     }
+  }
+
+  /* timeBackStep - how much user clicked load more, so method returns older posts */
+  async getFeed(user: User, timeBackStep: number) {
+    const friendsIds = await this.usersRepo.getFriendsIds(user.id);
+    console.log(friendsIds)
+    const postsPerFriend = await Promise.all(
+      friendsIds.map((friendId: string) =>
+        this.usersRepo.findPostsByTargetUser(
+          friendId,
+          undefined,
+          timeBackStep * 5
+        )
+      )
+    );
+
+    return postsPerFriend.flat();
   }
 }

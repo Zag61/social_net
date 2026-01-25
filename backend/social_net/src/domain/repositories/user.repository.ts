@@ -1,6 +1,6 @@
 import { PublicData, PublicUser } from "src/application/dto/user.dto";
 import { User } from "../entities/user";
-import { PostSummary } from "src/application/dto/post.dto";
+import { PostDto } from "src/application/dto/post.dto";
 
 
 export interface UserRepository {
@@ -17,7 +17,8 @@ export interface UserRepository {
   findAcceptedFriends(userId: string): Promise<PublicUser[]>;
   getPublicData(userId: string): Promise<PublicData>;
   findPublicByNickname(nickname: string): Promise<PublicUser | null>;
-  findPostsByTargetUser(userId: string, opts?: { limit?: number }): Promise<PostSummary[]>;
-  getIdByNickname(nickname: string): Promise<string | null> 
+  findPostsByTargetUser(userId: string, limit?: number, indent?: number): Promise<PostDto[]>;
+  getIdByNickname(nickname: string): Promise<string | null>;
+  getFriendsIds(userId: string): Promise<string[]>;
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

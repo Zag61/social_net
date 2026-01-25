@@ -156,9 +156,15 @@ CREATE TABLE friendships (
   status       friendship_status NOT NULL DEFAULT 'pending',
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at   TIMESTAMPTZ,
-  CONSTRAINT no_self_friend CHECK (requester_id <> addressee_id),
-  UNIQUE (requester_id, addressee_id)
+  CONSTRAINT no_self_friend CHECK (requester_id <> addressee_id)
 );
+
+CREATE UNIQUE INDEX unique_friendship_pair
+ON friendships (
+  LEAST(requester_id, addressee_id),
+  GREATEST(requester_id, addressee_id)
+);
+
 CREATE INDEX idx_friendships_requester ON friendships(requester_id);
 CREATE INDEX idx_friendships_addressee ON friendships(addressee_id);
 
