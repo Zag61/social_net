@@ -1,8 +1,90 @@
-<h2>Friends List</h2>
-<ul>
-  @for(friend of friends(); track friend.id){ 
-    <li>
-      {{ friend.nickname }} - {{ friend.online ? 'Online' : 'Offline' }}
-    </li>
-  }
-</ul>
+<div class="friends-page">
+  <div class="header-row">
+    <h2>Friends</h2>
+    <button class="add-btn" (click)="toggleAddMode()">+</button>
+  </div>
+
+  <div class="search-row">
+    <input type="text" placeholder='' (input)="onSearchInput($event)" />
+
+    <div class="hint">
+      @if (!addMode()) {
+        Filtering local friends
+      } @else {
+        Search users to add
+      }
+    </div>
+  </div>
+
+  <div class="grid">
+    @for (friend of displayedFriends(); track friend.id) {
+      <div class="friend-card">
+        <div class="avatar">
+          @if (friend.avatarUrl) {
+            <img [src]="friend.avatarUrl" alt="{{ friend.nickname }} avatar" loading="lazy" />
+          } @else {
+            <span class="initials">
+              {{ getInitials(friend) }}
+            </span>
+          }
+        </div>
+
+        <div class="meta">
+          <div class="name">{{ friend.nickname }}</div>
+          <div class="status" [class.online]="friend.online">
+            {{ friend.online ? 'Online' : 'Offline' }}
+          </div>
+        </div>
+
+        <div class="actions">
+          @if (!addMode()) {
+            <!-- existing friends: keep 3-dot menu with Remove -->
+            <button class="menu-btn" (click)="toggleMenu(friend.id)">⋯</button>
+
+            @if (openMenuId() === friend.id) {
+              <div class="menu">
+                <button
+                  (click)="sendUnfriendRequest(friend)"
+                  [disabled]="pendingRemovals()[friend.id]"
+                >
+                  {{ pendingRemovals()[friend.id] ? 'Removing...' : 'Remove friend' }}
+                </button>
+              </div>
+            }
+          } @else {
+            <!-- add-mode (search results) -->
+            @if (isFriend(friend)) {
+              <!-- user already a friend -> allow removal here too -->
+              <button
+                class="btn"
+                (click)="sendUnfriendRequest(friend)"
+                [disabled]="pendingRemovals()[friend.id]"
+              >
+                {{ pendingRemovals()[friend.id] ? 'Removing...' : 'Remove friend' }}
+              </button>
+            } @else {
+              <!-- not a friend -> send request -->
+              <button
+                class="btn"
+                (click)="sendFriendRequest(friend)"
+                [disabled]="pendingRequests()[friend.id]"
+              >
+                {{ pendingRequests()[friend.id] ? 'Requested' : 'Add' }}
+              </button>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    @if (displayedFriends().length === 0) {
+      <div class="empty">
+        @if (addMode()) {
+          No users found
+        } @else {
+          No friends match your search
+        }
+      </div>
+    }
+  </div>
+</div>

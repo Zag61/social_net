@@ -1,0 +1,180 @@
+@use 'sass:color';
+@use '../../shared/ui/styles/_variables.scss' as v;
+
+$brand: v.$main_color;
+$brand-dark: color.mix(black, $brand, 30%);
+$card-bg: color.mix(white, $brand, 60%);
+$text-dark: color.mix(black, $brand, 85%);
+$text-muted: color.mix(black, $brand, 65%);
+$border-light: color.mix(white, $brand, 55%);
+
+:host {
+  display: block;
+  font-family: v.$main_font;
+}
+
+/* ---------- page ---------- */
+.friends-page {
+  width: min(92vw, 920px);
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ---------- header ---------- */
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-row h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $text-dark;
+}
+
+.add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: $brand;
+  color: white;
+}
+
+/* ---------- search ---------- */
+.search-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.search-row input {
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid $border-light;
+  font-family: inherit;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: $text-muted;
+  padding-left: 0.5rem;
+}
+
+/* ---------- grid ---------- */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ---------- friend card ---------- */
+.friend-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem;
+  border-radius: 10px;
+  background: $card-bg;
+  border: 1px solid $border-light;
+}
+
+/* ---------- avatar ---------- */
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid $border-light;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.initials {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: $brand-dark;
+}
+
+/* ---------- meta ---------- */
+.meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 600;
+  color: $text-dark;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status {
+  font-size: 0.75rem;
+  color: $text-muted;
+}
+
+.status.online {
+  color: color.mix(green, $brand, 35%);
+}
+
+/* ---------- actions ---------- */
+.actions {
+  position: relative;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: $text-muted;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  border: 1px solid $border-light;
+  border-radius: 8px;
+  padding: 0.25rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  z-index: 10;
+}
+
+.menu button {
+  background: none;
+  border: none;
+  padding: 0.4rem 0.75rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+/* ---------- empty ---------- */
+.empty {
+  padding: 1rem;
+  text-align: center;
+  color: $text-muted;
+  font-size: 0.85rem;
+}
