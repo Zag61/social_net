@@ -34,9 +34,11 @@ CREATE TABLE users (
   avatar_file_id TEXT,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   verified       BOOLEAN NOT NULL DEFAULT false,
-  verification_token TEXT
+  verification_token TEXT,
+  last_seen TIMESTAMPTZ
 );
 CREATE UNIQUE INDEX idx_users_email_unique ON users(email);
+CREATE INDEX idx_users_last_seen ON users(last_seen);
 -- Файлы (hybrid backend = db / object_storage)
 CREATE TABLE files (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

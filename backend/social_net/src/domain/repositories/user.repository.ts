@@ -24,5 +24,6 @@ export interface UserRepository {
   getUsersByNickname(nickname?: string): Promise<User[] | null>;
   createFriendRequest(requesterId: string, addresseeId: string): Promise<void>;
   deleteFriendship(userAId: string, userBId: string): Promise<void>;
+  updateLastSeen(userId: string): Promise<void>;
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

@@ -1,0 +1,8 @@
+<h2>Friends List</h2>
+<ul>
+  @for(friend of friends(); track friend.id){ 
+    <li>
+      {{ friend.nickname }} - {{ friend.online ? 'Online' : 'Offline' }}
+    </li>
+  }
+</ul>

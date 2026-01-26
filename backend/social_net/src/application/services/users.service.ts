@@ -7,12 +7,14 @@ import { User } from 'src/domain/entities/user';
 import { v4 as uuidv4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { CreateUserDto } from '../dto/user.dto';
+import { PresenceService } from './presence.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY)
-    private readonly usersRepo: UserRepository
+    private readonly usersRepo: UserRepository,
+    private readonly presenceService: PresenceService
   ) { }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -116,8 +118,31 @@ export class UsersService {
 
   async getFriends(userId: string) {
     const friendsIds = await this.usersRepo.getFriendsIds(userId);
-    return this.usersRepo.getFriendsInfo(friendsIds);
+    
+    // return this.usersRepo.getFriendsInfo(friendsIds);
+    const users = await this.usersRepo.getFriendsInfo(friendsIds); // User[]
+  if (!users) return null;
+
+  // Use PresenceService to get statuses (inject PresenceService into UsersService)
+  const presenceMap = await this.presenceService.getOnlineMap(friendsIds);
+
+  // Optionally enforce user privacy: fetch user setting whether they allow presence.
+  // For simplicity, assume allowed.
+
+  // Attach online flag
+  return users.map(u => ({
+    id: u.id,
+    nickname: u.nickname,
+    avatarUrl: u.avatarUrl,
+   online: presenceMap[u.id] === true,       // true/false
+    // lastSeen: presenceMap[u.id] ? null : u.createdAt // or query last_seen column
+  }));
   }
+
+  async getFriendsIds(userId: string){
+    return this.usersRepo.getFriendsIds(userId);
+  }
+
   async getPeople(nickname?: string) {
     return this.usersRepo.getUsersByNickname(nickname);
   }
@@ -134,5 +159,9 @@ export class UsersService {
   async removeFriend(userId: string, otherId: string): Promise<{ success: boolean }> {
     await this.usersRepo.deleteFriendship(userId, otherId);
     return { success: true };
+  }
+
+  async updateLastSeen(userId: string){
+    return this.usersRepo.updateLastSeen(userId);
   }
 }

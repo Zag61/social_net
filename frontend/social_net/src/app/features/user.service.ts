@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
-import { UserDto } from '../entities/user.types';
+import { Friend, UserDto } from '../entities/user.types';
 import { PostDto } from '../entities/post.types';
 import { InteractionDto } from '../entities/interaction.types';
 import { Message } from '../entities/message';
@@ -28,6 +28,11 @@ export class UserService {
         return this.http.get<UserDto>(`http://localhost:3000/user/account/`, {withCredentials: true});
     }
 
+    getFriends(): Observable<Friend[]> {
+    return this.http.get<Friend[]>(`http://localhost:3000/user/friends`, {
+      withCredentials: true,
+    });
+  }
     // getUser(userNickname: string): Observable<UserDto> {
     //     return this.http.get<UserDto>(`/api/users/${encodeURIComponent(userNickname)}`);
     // }

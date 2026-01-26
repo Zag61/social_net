@@ -9,6 +9,7 @@ import { userResolver } from '../pages/user-profile/user.resolver';
 import { AccountResolver } from '../pages/user-profile/AccountResolver';
 import { MessagesComponent } from '../pages/messages/messages-component';
 import { messageResolver } from '../pages/messages/message.resolver';
+import { FriendsComponent } from '../pages/friends/friends.component';
 
 export const routes: Routes = [
   { path: '', component: AuthPageComponent },
@@ -18,5 +19,6 @@ export const routes: Routes = [
   { path: 'users/:nickname', component: UserProfileComponent, resolve: { user: userResolver } },
   { path: 'account', component: UserProfileComponent, resolve: { user: AccountResolver } },
   { path: 'messages/:nickname', component: MessagesComponent, resolve: {messages : messageResolver}},
+  { path: 'friends', component: FriendsComponent },
   { path: '**', redirectTo: '' }
 ];

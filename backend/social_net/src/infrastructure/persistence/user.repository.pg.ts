@@ -78,7 +78,6 @@ export class PgUserRepository implements UserRepository {
     }
   }
 
-
   async findByEmail(email: string): Promise<User | null> {
     const q = `
       SELECT id, email, password_hash, nickname, about_info, phone_number, avatar_file_id, verified
@@ -124,6 +123,7 @@ export class PgUserRepository implements UserRepository {
     const parsed = UserRowSchema.parse(row);
     return this.mapRowToEntity(parsed);
   }
+
   async getIdByNickname(nickname: string): Promise<string | null> {
     const q = `
       SELECT id
@@ -545,4 +545,11 @@ export class PgUserRepository implements UserRepository {
       throw err;
     }
   }
+
+  async updateLastSeen(userId: string): Promise<void> {
+  await this.pool.query(
+    `UPDATE users SET last_seen = now() WHERE id = $1`,
+    [userId]
+  );
+}
 }

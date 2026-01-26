@@ -7,9 +7,15 @@ import { POSTGRES_POOL } from "../providers/postgres.provider";
 import { S3Service } from "src/application/services/s3.service";
 import { Pool } from "pg";
 import { PgUserRepository } from "src/infrastructure/persistence/user.repository.pg";
+import { PresenceService } from "src/application/services/presence.service";
+import { PresenceGateway } from "../gateways/presence.gateway";
+import { JwtService } from "@nestjs/jwt";
 
 @Module({
     providers: [UsersService,
+        JwtService,
+        PresenceService,
+        PresenceGateway,
     {
         provide: USER_REPOSITORY,
         useFactory: (pool: Pool, s3: S3Service) =>
@@ -19,6 +25,6 @@ import { PgUserRepository } from "src/infrastructure/persistence/user.repository
     ],
     imports: [DBModule],
     controllers: [UsersController],
-    exports: [UsersService, USER_REPOSITORY]
+    exports: [UsersService, USER_REPOSITORY, PresenceService]
 })
 export class UsersModule { }
