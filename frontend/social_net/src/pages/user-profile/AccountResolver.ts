@@ -11,6 +11,14 @@ function mapPost(p: any): PostVM {
     text: p.text ?? p.body ?? '',
     attachmentsPresent: !!(p.attachmentsPresent ?? p.attachments_present),
     createdAt: p.createdAt ?? p.created_at ?? p.created ?? '',
+    attachmentsurls:  Array.isArray(p.attachmentsurls)
+      ? p.attachmentsurls.map((a: any) => ({
+          id: a.id ?? a._id ?? '',
+          name: a.name ?? '',
+          url: a.url ?? '',
+          mimeType: a.mimeType
+        }))
+      : [],
   };
 }
 
@@ -30,18 +38,16 @@ function normalizeProfile(raw: any): ProfileVM {
       publicStats: null,
       isOwner: true,
       _raw: raw,
-      avatarUrl: raw.avatarUrl
+      avatarUrl: fu.avatarUrl
     };
   }
 
   // case 2: public view (flat object, snake_case possible)
   // sometimes the response may be the object itself (not nested)
   const obj = raw ?? {};
-  const publicStats = obj.publicStats ?? obj.public_stats ?? null;
-
-  const postsSource = obj.posts ?? [];
+  const publicStats = raw.publicStats ?? raw.public_stats ?? null;
+  const postsSource = raw.posts ?? [];
   const posts = (postsSource ?? []).map(mapPost);
-
   // pick about info from several places
   const aboutInfo =
     obj.aboutInfo ??
@@ -77,5 +83,6 @@ export const AccountResolver: ResolveFn<ProfileVM> = async (
 ) => {
   const userService = inject(UserService);
   const raw = await firstValueFrom(userService.getUserById());
+  console.log(raw)
   return normalizeProfile(raw);
 };

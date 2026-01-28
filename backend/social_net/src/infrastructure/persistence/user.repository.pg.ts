@@ -33,7 +33,6 @@ export class PgUserRepository implements UserRepository {
 
   private async attachFiles(posts: PostDto[]) {
     const postsWithFiles = posts.filter(p => p.attachmentsPresent);
-    console.log(postsWithFiles)
     if (!postsWithFiles.length) return;
 
     const postIds = postsWithFiles.map(p => p.id);
@@ -44,7 +43,8 @@ export class PgUserRepository implements UserRepository {
       f.id AS file_id,
       f.name,
       f.storage_bucket,
-      f.storage_key
+      f.storage_key,
+      f.mime_type
     FROM post_files pf
     JOIN files f ON f.id = pf.file_id
     WHERE pf.post_id = ANY($1)
@@ -65,8 +65,9 @@ export class PgUserRepository implements UserRepository {
         id: r.file_id,
         name: r.name,
         url,
+        mimeType: r.mime_type
       };
-
+      console.log(file)
       if (!byPostId.has(r.post_id)) {
         byPostId.set(r.post_id, []);
       }
@@ -276,7 +277,7 @@ export class PgUserRepository implements UserRepository {
     `;
     try {
       const { rows } = await this.pool.query(q, [userId, limit, offset]);
-      console.log(rows)
+      
       const posts: PostDto[] = rows.map((r: any) => ({
         id: r.id,
         authorId: r.author_id,
@@ -287,6 +288,7 @@ export class PgUserRepository implements UserRepository {
       }));
 
       await this.attachFiles(posts);
+      console.log(posts);
       return posts;
     } catch (err) {
       this.logger.error({ msg: 'findPostsByTargetUser failed', userId, err });

@@ -27,6 +27,8 @@ services:
     image: quay.io/minio/mc:latest
     depends_on:
       - minio
+    volumes:
+    - ./test-files:/seed-files:ro
     entrypoint: >
       /bin/sh -c "
       until mc alias set myminio http://minio:9000 devuser devpass123; do
@@ -34,6 +36,10 @@ services:
       done;
       mc mb --ignore-existing myminio/social-net-files;
       mc anonymous set download myminio/social-net-files;
+
+      echo 'Uploading test files...';
+      mc cp --recursive /seed-files myminio/social-net-files;
+      echo 'MinIO seed completed';
       exit 0;
       "
   redis:

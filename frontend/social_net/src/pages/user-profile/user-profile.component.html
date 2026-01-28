@@ -1,58 +1,98 @@
 @if (profile()) {
-  <div class="profile-page">
-    <div class="profile-card auth">
-      <div class="profile-header logo-box">
-        <img class="avatar" [src]="profile()?.avatarUrl" alt="avatar" />
-        <h1 class="title">{{ profile()?.nickname }}</h1>
-        @if (profile()?.verified) {
-          <div class="subtitle">Verified</div>
-        }
-        @if (profile()?.aboutInfo) {
-          <p class="about">{{ profile()?.aboutInfo}}</p>
-        }
-      </div>
+<div class="profile-page">
+  <div class="profile-card auth">
+    <div class="profile-header logo-box">
+      <img class="avatar" [src]="profile()?.avatarUrl" alt="avatar" />
+      <h1 class="title">{{ profile()?.nickname }}</h1>
+      @if (profile()?.verified) {
+      <div class="subtitle">Verified</div>
+      }
+      @if (profile()?.aboutInfo) {
+      <p class="about">{{ profile()?.aboutInfo}}</p>
+      }
+    </div>
 
-      <div class="profile-main">
-        <!-- Owner-only block -->
-        @if (profile()?.isOwner) {
-          <section class="friends-block">
-            <h2>Friends</h2>
+    <div class="profile-main">
+      <!-- Owner-only block -->
+      @if (profile()?.isOwner) {
+      <section class="friends-block">
+        <h2>Friends</h2>
 
-            @if (profile()?.friends?.length) {
-              <div class="friends-list">
-                @for (friend of profile()?.friends; track friend?.id) {
-                  <div class="friend-card">
-                    <div class="friend-name" (click)="goToChat(friend.nickname)">{{ friend.nickname }}</div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="no-friends">No friends yet</p>
-            }
-          </section>
+        @if (profile()?.friends?.length) {
+        <div class="friends-list">
+          @for (friend of profile()?.friends; track friend?.id) {
+          <div class="friend-card">
+            <div class="friend-name" (click)="goToChat(friend.nickname)">{{ friend.nickname }}</div>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="no-friends">No friends yet</p>
         }
+      </section>
+      }
 
-        <section class="posts-block">
-          <h2>Posts ({{ posts().length }})</h2>
-          @if (posts().length) {
-            <div class="posts">
-              @for (post of posts(); track post.id) {
-                <article class="post-card">
-                  <h3 class="post-text">{{ post.text }}</h3>
-                  <div class="meta">{{ post.createdAt }}</div>
-                </article>
+      <section class="posts-block">
+        <h2>Posts ({{ posts().length }})</h2>
+
+        @if (posts().length) {
+        <div class="posts">
+          @for (post of posts(); track post.id) {
+          <article class="post-card">
+            <h3 class="post-text">{{ post.text }}</h3>
+
+            @if (post.attachmentsurls?.length) {
+            <div class="attachments">
+              @for (att of post.attachmentsurls; track att.id) {
+
+              <!-- IMAGE -->
+              @if (att.mimeType?.startsWith('image/')) {
+              <img class="attachment-image" [src]="att.url" [alt]="att.name" loading="lazy" />
+              }
+
+              <!-- VIDEO -->
+              @else if (att.mimeType?.startsWith('video/')) {
+              <video class="attachment-video" [src]="att.url" controls preload="metadata">
+                Your browser does not support the video tag.
+              </video>
+              }
+
+              <!-- AUDIO -->
+              @else if (att.mimeType?.startsWith('audio/')) {
+              <audio class="attachment-audio" [src]="att.url" controls preload="metadata">
+                Your browser does not support the audio element.
+              </audio>
+              }
+
+              <!-- OTHER FILES -->
+              @else {
+              <a class="attachment-file" [href]="att.url" target="_blank" rel="noopener noreferrer">
+                📎 {{ att.name }}
+              </a>
+              }
+
               }
             </div>
-          } @else {
-            <p class="no-posts">No posts yet</p>
+            }
+
+
+            <div class="meta">
+              {{ post.createdAt | date: 'medium' }}
+            </div>
+          </article>
           }
-        </section>
-      </div>
+        </div>
+        } @else {
+        <p class="no-posts">No posts yet</p>
+        }
+      </section>
+
     </div>
   </div>
+</div>
 } @else {
-  <div class="profile-page">
-    <div class="profile-card auth">
-      <div class="loading">Loading...</div>
-    </div>
-  </div>}
+<div class="profile-page">
+  <div class="profile-card auth">
+    <div class="loading">Loading...</div>
+  </div>
+</div>}

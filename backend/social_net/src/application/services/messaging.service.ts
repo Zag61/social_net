@@ -52,6 +52,7 @@ export class MessagingService {
             id: fileRecord.id,
             name: file.originalname,
             url,
+            mimeType: fileRecord.name
           };
         })
       );

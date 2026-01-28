@@ -24,8 +24,8 @@ export class UserService {
         return this.http.get<Message[]>(`http://localhost:3000/messages?peerNickname=${encodeURIComponent(peerNickname)}&limit=${encodeURIComponent(limit)}`, { withCredentials: true });
     }
 
-    getUserById(): Observable<UserDto> {
-        return this.http.get<UserDto>(`http://localhost:3000/user/account/`, { withCredentials: true });
+    getUserById(): Observable<unknown> {
+        return this.http.get<unknown>(`http://localhost:3000/user/account/`, { withCredentials: true });
     }
 
     getFriends(): Observable<Friend[]> {
