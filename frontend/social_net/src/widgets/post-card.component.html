@@ -1,0 +1,67 @@
+<article class="post-card">
+
+  @if (post.text) {
+    <h3 class="post-text">{{ post.text }}</h3>
+  }
+
+  <!-- Attachments -->
+  @if (post.attachmentsurls?.length) {
+    <div class="attachments">
+      @for (att of post.attachmentsurls; track trackByAttachment($index, att)) {
+
+        <!-- IMAGE -->
+        @if (isImage(att.mimeType)) {
+          <img
+            class="attachment-image"
+            [src]="att.url"
+            [alt]="att.name"
+            loading="lazy"
+          />
+        }
+
+        <!-- VIDEO -->
+        @else if (isVideo(att.mimeType)) {
+          <video
+            class="attachment-video"
+            [src]="att.url"
+            controls
+            preload="metadata"
+          >
+            Your browser does not support the video tag.
+          </video>
+        }
+
+        <!-- AUDIO -->
+        @else if (isAudio(att.mimeType)) {
+          <div class="attachment-audio-wrap">
+            <div class="attachment-file-name">🎵 {{ att.name }}</div>
+            <audio
+              class="attachment-audio"
+              [src]="att.url"
+              controls
+              preload="metadata"
+            ></audio>
+          </div>
+        }
+
+        <!-- OTHER FILES -->
+        @else {
+          <a
+            class="attachment-file"
+            [href]="att.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            📎 {{ att.name }}
+          </a>
+        }
+
+      }
+    </div>
+  }
+
+  <div class="meta">
+    {{ post.createdAt | date: 'medium' }}
+  </div>
+
+</article>

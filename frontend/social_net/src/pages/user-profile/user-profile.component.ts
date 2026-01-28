@@ -2,9 +2,10 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
+import { PostCardComponent } from '../../widgets/post-card.component';
 
 @Component({
-  imports:[DatePipe],
+  imports:[DatePipe, PostCardComponent],
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
@@ -18,6 +19,9 @@ export class UserProfileComponent {
 
   goToChat(nickname: string) {
     this.router.navigate(['/messages', nickname]);
+  }
+  trackByPost(_index: number, p: PostVM) {
+    return p.id;
   }
 }
 

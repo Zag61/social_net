@@ -38,48 +38,7 @@
         @if (posts().length) {
         <div class="posts">
           @for (post of posts(); track post.id) {
-          <article class="post-card">
-            <h3 class="post-text">{{ post.text }}</h3>
-
-            @if (post.attachmentsurls?.length) {
-            <div class="attachments">
-              @for (att of post.attachmentsurls; track att.id) {
-
-              <!-- IMAGE -->
-              @if (att.mimeType?.startsWith('image/')) {
-              <img class="attachment-image" [src]="att.url" [alt]="att.name" loading="lazy" />
-              }
-
-              <!-- VIDEO -->
-              @else if (att.mimeType?.startsWith('video/')) {
-              <video class="attachment-video" [src]="att.url" controls preload="metadata">
-                Your browser does not support the video tag.
-              </video>
-              }
-
-              <!-- AUDIO -->
-              @else if (att.mimeType?.startsWith('audio/')) {
-              <audio class="attachment-audio" [src]="att.url" controls preload="metadata">
-                Your browser does not support the audio element.
-              </audio>
-              }
-
-              <!-- OTHER FILES -->
-              @else {
-              <a class="attachment-file" [href]="att.url" target="_blank" rel="noopener noreferrer">
-                📎 {{ att.name }}
-              </a>
-              }
-
-              }
-            </div>
-            }
-
-
-            <div class="meta">
-              {{ post.createdAt | date: 'medium' }}
-            </div>
-          </article>
+          <app-post-card [post]="post"></app-post-card>
           }
         </div>
         } @else {
