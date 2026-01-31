@@ -15,11 +15,10 @@ export class UsersController {
   async getUserInfoAcc(
     @CurrentUser() viewer: UserPayload,
     @Req() req: Request,) {
-
     const user = await this.userService.getNicknameById(viewer?.id);
-
     if (!user?.nickname) return error;
     let duh = await this.userService.getProfileByNickname(user.nickname, viewer?.id);
+    console.log(duh)
     return duh;
   }
 

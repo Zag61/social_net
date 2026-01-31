@@ -1,4 +1,4 @@
-import { UUID } from "./types";
+import { UUID } from "./user.types";
 
 export class Group {
   public readonly createdAt: Date;

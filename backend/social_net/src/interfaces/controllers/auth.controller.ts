@@ -55,7 +55,6 @@ export class AuthController {
       }
       throw new BadRequestException('Email already in use');
     }
-    console.log(dto)
     const user = await this.usersService.createUser(dto);
     await this.authService.sendVerificationEmail(user);
 

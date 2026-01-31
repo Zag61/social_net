@@ -1,14 +1,14 @@
-import { Timestamp, UUID } from "./types";
+import { UUID } from "./types";
 
 export class Message {
-  private editedAt?: Timestamp;
+  private editedAt?: Date;
 
   constructor(
     public readonly id: UUID,
     public readonly senderId: UUID,
     public readonly receiverId: UUID, // user or channel id depending on your design
     public text: string,
-    public readonly sentAt: Timestamp = new Date(),
+    public readonly sentAt: Date = new Date(),
   ) {}
 
   edit(newText: string) {
@@ -17,10 +17,10 @@ export class Message {
     this.editedAt = new Date();
   }
 
-  getEditedAt(): Timestamp | undefined {
+  getEditedAt(): Date | undefined {
     return this.editedAt;
   }
-  setEditedAt(): Timestamp | undefined {
+  setEditedAt(): Date | undefined {
     return this.editedAt;
   }
 }

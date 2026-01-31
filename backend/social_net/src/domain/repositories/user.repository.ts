@@ -10,9 +10,7 @@ export interface UserRepository {
   insert(user: User): Promise<void>;
   update(user: User): Promise<void>;
   delete(id: string): Promise<void>;
-  findByVerificationToken(token: string): Promise<User | null>;
-  setVerificationToken(userId: string, token: string): Promise<void>;
-  markVerified(userId: string): Promise<void>;
+  verifyByToken(token: string): Promise<User | null>; 
   findFullById(id: string): Promise<User | null>;
   findAcceptedFriends(userId: string): Promise<PublicUser[]>;
   getPublicData(userId: string): Promise<PublicData>;
@@ -25,5 +23,6 @@ export interface UserRepository {
   createFriendRequest(requesterId: string, addresseeId: string): Promise<void>;
   deleteFriendship(userAId: string, userBId: string): Promise<void>;
   updateLastSeen(userId: string): Promise<void>;
+  createVerificationTokenForUser(userId: string, ttlMs?: number): Promise<string>;
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

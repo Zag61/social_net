@@ -1,7 +1,7 @@
-import { Timestamp, UUID } from "./types";
+import { UUID } from "./types";
 
 export class Channel {
-  public readonly createdAt: Timestamp;
+  public readonly createdAt: Date;
 
   constructor(
     public readonly id: UUID,
@@ -9,7 +9,7 @@ export class Channel {
     public readonly ownerId: UUID,
     /** reference to stored picture (infra) */
     public picFileId?: UUID,
-    createdAt?: Timestamp,
+    createdAt?: Date,
   ) {
     this.createdAt = createdAt ?? new Date();
   }

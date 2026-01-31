@@ -1,14 +1,14 @@
 // src/app/auth/token.service.ts
 import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { JwtPayload, User } from '../entities/auth.types';
+import { JwtPayload } from '../entities/auth.types';
 
 @Injectable({ providedIn: 'root' })
 export class TokenService {
   private readonly TOKEN_KEY = 'access_token';
   private readonly USER_KEY = 'user_data';
   
-  currentUser = signal<User | null>(null);
+  currentUser = signal<string | null>(null);
   isAuthenticated = signal(false);
 
   constructor(@Inject(PLATFORM_ID) private platformId: any) {
@@ -41,33 +41,14 @@ export class TokenService {
     }
   }
 
-  getUser(): User | null {
-    // First try to get from signal
-    const userFromSignal = this.currentUser();
-    if (userFromSignal) return userFromSignal;
-    
-    // If not in signal, try localStorage (browser only)
-    if (isPlatformBrowser(this.platformId)) {
-      const storedUser = localStorage.getItem(this.USER_KEY);
-      return storedUser ? JSON.parse(storedUser) : null;
-    }
-    
-    return null;
-  }
-
   // Extract user from token
-  private extractUserFromToken(token: string): User | null {
+  private extractUserFromToken(token: string): string | null {
     try {
       console.log(token)
       const payload = this.decodeToken(token);
-      if (!payload) return null;
       
-      return {
-        id: payload.sub || payload.id,
-        email: payload.email,
-        nickname: payload.nickname,
-        createdAt: payload.createdAt ? new Date(payload.createdAt) : undefined
-      };
+      if (!payload) return null;
+      return payload.id!;
     } catch (error) {
       console.error('Error extracting user from token:', error);
       return null;

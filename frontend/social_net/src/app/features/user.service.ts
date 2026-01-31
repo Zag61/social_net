@@ -3,7 +3,6 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { Friend, User, UserDto } from '../entities/user.types';
 import { PostDto } from '../entities/post.types';
-import { InteractionDto } from '../entities/interaction.types';
 import { Message } from '../entities/message';
 
 
@@ -56,11 +55,5 @@ export class UserService {
     getUserPosts(userId: string, limit = 20): Observable<PostDto[]> {
         const params = new HttpParams().set('limit', String(limit));
         return this.http.get<PostDto[]>(`/api/users/${encodeURIComponent(userId)}/posts`, { params });
-    }
-
-
-    getRecentInteractions(userId: string, limit = 10): Observable<InteractionDto[]> {
-        const params = new HttpParams().set('limit', String(limit));
-        return this.http.get<InteractionDto[]>(`/api/users/${encodeURIComponent(userId)}/interactions`, { params });
     }
 }

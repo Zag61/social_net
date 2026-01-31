@@ -1,8 +1,8 @@
-import { Timestamp, UUID } from "./types";
+import { UUID } from "./types";
 
 export class Post {
-  public readonly createdAt: Timestamp;
-  private editedAt?: Timestamp;
+  public readonly createdAt: Date;
+  private editedAt?: Date;
   private text: string;
   private attachmentsPresent: boolean;
 
@@ -12,7 +12,7 @@ export class Post {
     public readonly channelId: UUID,
     text: string,
     attachmentsPresent = false,
-    createdAt?: Timestamp,
+    createdAt?: Date,
   ) {
     this.text = text;
     this.attachmentsPresent = attachmentsPresent;
@@ -23,7 +23,7 @@ export class Post {
     return this.text;
   }
 
-  getEditedAt(): Timestamp | undefined {
+  getEditedAt(): Date | undefined {
     return this.editedAt;
   }
 

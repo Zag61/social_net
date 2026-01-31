@@ -5,7 +5,7 @@ import { DatePipe } from '@angular/common';
 import { PostCardComponent } from '../../widgets/post-card.component';
 
 @Component({
-  imports:[DatePipe, PostCardComponent],
+  imports:[PostCardComponent],
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],

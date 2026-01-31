@@ -2,7 +2,7 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { MESSAGE_FILES_REPOSITORY, MessageFilesRepository, MessageFileEntity } from 'src/domain/repositories/message-files.repository';
+import { MessageFilesRepository, MessageFileEntity } from 'src/domain/repositories/message-files.repository';
 import { POSTGRES_POOL } from 'src/interfaces/providers/postgres.provider';
 
 @Injectable()

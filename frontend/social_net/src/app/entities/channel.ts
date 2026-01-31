@@ -1,12 +1,12 @@
-import { UUID } from "./types";
+import { UUID } from "./user.types";
 
-export class Group {
+export class Channel {
   public readonly createdAt: Date;
 
   constructor(
     public readonly id: UUID,
     public name: string,
-    public ownerId: UUID,
+    public readonly ownerId: UUID,
     /** reference to stored picture (infra) */
     public picFileId?: UUID,
     createdAt?: Date,
@@ -15,12 +15,8 @@ export class Group {
   }
 
   rename(newName: string) {
-    if (!newName || newName.length < 2) throw new Error('Invalid name');
+    if (!newName || newName.length < 2) throw new Error('Invalid channel name');
     this.name = newName;
-  }
-
-  changeOwner(newOwnerId: UUID) {
-    this.ownerId = newOwnerId;
   }
 
   setPicture(fileId?: UUID) {

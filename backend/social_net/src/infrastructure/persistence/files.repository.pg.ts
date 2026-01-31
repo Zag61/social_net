@@ -4,7 +4,7 @@ import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesRepository } from 'src/domain/repositories/files.repository';
 import { POSTGRES_POOL } from 'src/interfaces/providers/postgres.provider';
-import { FileRecord } from './dao/fileDAO';
+import { FileDto } from './dao/file.dto';
 
 @Injectable()
 export class PgFilesRepository implements FilesRepository {
@@ -12,7 +12,7 @@ export class PgFilesRepository implements FilesRepository {
 
   constructor(@Inject(POSTGRES_POOL) private readonly pool: Pool) {}
 
-  async create(data: Omit<FileRecord, 'id' | 'created_at'>): Promise<FileRecord> {
+  async create(data: Omit<FileDto, 'id' | 'created_at'>): Promise<FileDto> {
     const id = uuidv4();
     const created_at = new Date();
 
@@ -35,16 +35,16 @@ export class PgFilesRepository implements FilesRepository {
 
     try {
       const { rows } = await this.pool.query(query, params);
-      return rows[0] as FileRecord;
+      return rows[0] as FileDto;
     } catch (err) {
       this.logger.error('Failed to insert file', err);
       throw err;
     }
   }
 
-  async findById(id: string): Promise<FileRecord | null> {
+  async findById(id: string): Promise<FileDto | null> {
     const query = `SELECT * FROM files WHERE id = $1`;
     const { rows } = await this.pool.query(query, [id]);
-    return rows[0] ? (rows[0] as FileRecord) : null;
+    return rows[0] ? (rows[0] as FileDto) : null;
   }
 }

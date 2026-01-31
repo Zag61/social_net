@@ -8,8 +8,8 @@ createdAt?: string;
 }
 export interface Friend {
   id: string;
-  email: string;         // empty string in your response
-  passwordHash: string;  // empty string in your response
+  email: string;  
+  passwordHash: string;
   nickname: string;
   avatarFileId?: string;
   verified: boolean;
@@ -26,12 +26,9 @@ export class User {
     public nickname: string,
     public aboutInfo?: string,
     public phoneNumber?: string,
-    /** reference to file storage entry (infrastructure) */
     public avatarFileId?: UUID,
     public verified: boolean = false,                 
-    public verificationToken?: string | null,
     public createdAt?: string,
-    public avatarUrl?: string
   ) {}
 
   // identity check

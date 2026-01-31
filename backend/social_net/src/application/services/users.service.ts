@@ -8,13 +8,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { Inject } from '@nestjs/common';
 import { CreateUserDto } from '../dto/user.dto';
 import { PresenceService } from './presence.service';
+import { S3Service } from './s3.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(USER_REPOSITORY)
     private readonly usersRepo: UserRepository,
-    private readonly presenceService: PresenceService
+    private readonly presenceService: PresenceService,
+    private readonly s3: S3Service
   ) { }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -40,23 +42,10 @@ export class UsersService {
     await this.usersRepo.insert(user);
     return user;
   }
-
-  async setVerificationToken(userId: string, token: string) {
-    const user = await this.usersRepo.findById(userId);
-    if (!user) throw new Error('User not found');
-
-    user.verificationToken = token;
-    await this.usersRepo.update(user);
-
-  }
-
   async verifyByToken(token: string) {
-    const user = await this.usersRepo.findByVerificationToken(token);
+    const user = await this.usersRepo.verifyByToken(token);
     if (!user) return null;
-
     user.verified = true;
-    user.verificationToken = null;
-    await this.usersRepo.update(user);
     return user;
   }
   async getNicknameById(id: string): Promise<User | null> {
@@ -79,7 +68,7 @@ export class UsersService {
         nickname: user.nickname,
         about_info: user.aboutInfo,
         avatar_file_id: user.avatarFileId,
-        avatarUrl: user.avatarUrl,
+        avatarUrl: await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, user.avatarFileId!),
         created_at: user.createdAt,
         publicStats,
         posts: recentPosts.map(p => ({
@@ -96,7 +85,16 @@ export class UsersService {
         this.usersRepo.findPostsByTargetUser(user.id, 20),
         this.usersRepo.findAcceptedFriends(user.id)
       ]);
-      return { fullUser, posts, friends };
+      return {
+      fullUser: {
+        ...fullUser,
+        avatarUrl: fullUser?.avatarFileId
+          ? await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, fullUser.avatarFileId)
+          : null
+      },
+      posts,
+      friends
+    };
     }
   }
   /* timeBackStep - how much user clicked load more, so method returns older posts */
@@ -118,33 +116,54 @@ export class UsersService {
 
   async getFriends(userId: string) {
     const friendsIds = await this.usersRepo.getFriendsIds(userId);
-    
+
     // return this.usersRepo.getFriendsInfo(friendsIds);
     const users = await this.usersRepo.getFriendsInfo(friendsIds); // User[]
-  if (!users) return null;
+    if (!users) return null;
 
-  // Use PresenceService to get statuses (inject PresenceService into UsersService)
-  const presenceMap = await this.presenceService.getOnlineMap(friendsIds);
+    // Use PresenceService to get statuses (inject PresenceService into UsersService)
+    const presenceMap = await this.presenceService.getOnlineMap(friendsIds);
 
-  // Optionally enforce user privacy: fetch user setting whether they allow presence.
-  // For simplicity, assume allowed.
+    // Optionally enforce user privacy: fetch user setting whether they allow presence.
+    // For simplicity, assume allowed.
 
-  // Attach online flag
-  return users.map(u => ({
-    id: u.id,
-    nickname: u.nickname,
-    avatarUrl: u.avatarUrl,
-   online: presenceMap[u.id] === true,       // true/false
-    // lastSeen: presenceMap[u.id] ? null : u.createdAt // or query last_seen column
-  }));
+    // Attach online flag
+    return Promise.all(
+      users.map(async (u) => ({
+        id: u.id,
+        nickname: u.nickname,
+        avatarUrl: u.avatarFileId
+          ? await this.s3.getPresignedDownloadUrl(
+            process.env.S3_BUCKET!,
+            u.avatarFileId
+          )
+          : null,
+        online: presenceMap[u.id] === true,
+        // lastSeen: presenceMap[u.id] ? null : u.createdAt
+      }))
+    );
   }
 
-  async getFriendsIds(userId: string){
+  async getFriendsIds(userId: string) {
     return this.usersRepo.getFriendsIds(userId);
   }
 
   async getPeople(nickname?: string) {
-    return this.usersRepo.getUsersByNickname(nickname);
+    const users = await this.usersRepo.getUsersByNickname(nickname);
+    if (!users) return null;
+
+    return Promise.all(
+      users.map(async (u) => ({
+        id: u.id,
+        nickname: u.nickname,
+        avatarUrl: u.avatarFileId
+          ? await this.s3.getPresignedDownloadUrl(
+            process.env.S3_BUCKET!,
+            u.avatarFileId
+          )
+          : null,
+      }))
+    );
   }
 
   async sendFriendRequest(requesterId: string, addresseeId: string): Promise<{ success: boolean; message?: string }> {
@@ -161,7 +180,7 @@ export class UsersService {
     return { success: true };
   }
 
-  async updateLastSeen(userId: string){
+  async updateLastSeen(userId: string) {
     return this.usersRepo.updateLastSeen(userId);
   }
 }

@@ -10,9 +10,9 @@
       </div>
       }
 
-      @if (msg.files.length) {
+      @if (msg.attachments.length) {
       <div class="files">
-        @for (file of msg.files; track file.id) {
+        @for (file of msg.attachments; track file.id) {
         <a [href]="file.url" target="_blank" class="file-link">
           {{ file.name }}
         </a>

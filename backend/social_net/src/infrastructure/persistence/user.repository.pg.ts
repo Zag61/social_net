@@ -1,12 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { User } from 'src/domain/entities/user';
 import { UserRepository } from 'src/domain/repositories/user.repository';
-import { UserRow, UserRowSchema } from './dao/userDAO';
+import { UserRowDTO, validateRow } from './dao/userDAO';
 import { PostDto } from 'src/application/dto/post.dto';
 import { PublicData, PublicUser } from 'src/application/dto/user.dto';
 import { S3Service } from 'src/application/services/s3.service';
 import { UploadedFile } from 'src/application/dto/file.dto';
+import { createHash, randomBytes } from 'crypto';
 @Injectable()
 export class PgUserRepository implements UserRepository {
   private readonly logger = new Logger(PgUserRepository.name);
@@ -16,7 +17,7 @@ export class PgUserRepository implements UserRepository {
     private readonly s3: S3Service,
   ) { }
 
-  private mapRowToEntity(row: UserRow): User {
+  private mapRowToEntity(row: UserRowDTO): User {
     return new User(
       row.id,
       row.email ?? '',
@@ -26,11 +27,71 @@ export class PgUserRepository implements UserRepository {
       row.phone_number ?? undefined,
       row.avatar_file_id ?? undefined,
       row.verified ?? false,
-      row.verification_token ?? undefined,
       row.avatarUrl ?? undefined
     );
   }
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+  /**
+ * Create (or replace) verification token for user and return the plaintext token
+ * Caller should send the plaintext token in an email link.
+ */
+  async createVerificationTokenForUser(userId: string, ttlMs = 24 * 60 * 60 * 1000): Promise<string> {
+    const token = randomBytes(32).toString('hex'); // plaintext token to email
+    const tokenHash = this.hashToken(token);
+    const expiresAt = new Date(Date.now() + ttlMs);
 
+    // remove any existing token for user, then insert hashed token
+    await this.pool.query('BEGIN');
+    try {
+      await this.pool.query('DELETE FROM verification_tokens WHERE user_id = $1', [userId]);
+      await this.pool.query(
+        'INSERT INTO verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+        [userId, tokenHash, expiresAt]
+      );
+      await this.pool.query('COMMIT');
+    } catch (err) {
+      await this.pool.query('ROLLBACK');
+      throw err;
+    }
+
+    return token;
+  }
+/**
+ * Verify incoming token: if valid, mark user verified and delete token (single-use).
+ * Returns the updated User or null if token invalid/expired.
+ */
+async verifyByToken(token: string): Promise<User | null> {
+  const tokenHash = this.hashToken(token);
+
+  const q = `
+    SELECT user_id
+    FROM verification_tokens
+    WHERE token_hash = $1
+      AND (expires_at IS NULL OR expires_at > now())
+    LIMIT 1
+  `;
+
+  const { rows } = await this.pool.query(q, [tokenHash]);
+  const row = rows[0];
+  if (!row) return null;
+
+  const userId = row.user_id;
+
+  await this.pool.query('BEGIN');
+  try {
+    // mark verified and remove token atomically
+    await this.pool.query('UPDATE users SET verified = true WHERE id = $1', [userId]);
+    await this.pool.query('DELETE FROM verification_tokens WHERE user_id = $1', [userId]);
+    await this.pool.query('COMMIT');
+  } catch (err) {
+    await this.pool.query('ROLLBACK');
+    throw err;
+  }
+
+  return this.findById(userId); // returns User
+}
   private async attachFiles(posts: PostDto[]) {
     const postsWithFiles = posts.filter(p => p.attachmentsPresent);
     if (!postsWithFiles.length) return;
@@ -89,7 +150,7 @@ export class PgUserRepository implements UserRepository {
     const { rows } = await this.pool.query(q, [email]);
     const row = rows[0];
     if (!row) return null;
-    const parsed = UserRowSchema.parse(row); // Zod валидация
+    const parsed = await validateRow(UserRowDTO, row);
     return this.mapRowToEntity(parsed);
   }
 
@@ -103,10 +164,9 @@ export class PgUserRepository implements UserRepository {
     const { rows } = await this.pool.query(q, [nickname]);
     const row = rows[0];
     if (!row) return null;
-    const parsed = UserRowSchema.parse(row);
+    const parsed = await validateRow(UserRowDTO, row);
     const user = this.mapRowToEntity(parsed);
     if (!parsed.avatar_file_id) return user;
-    user.avatarUrl = await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, parsed.avatar_file_id);
     return user;
   }
 
@@ -120,8 +180,7 @@ export class PgUserRepository implements UserRepository {
     const { rows } = await this.pool.query(q, [id]);
     const row = rows[0];
     if (!row) return null;
-
-    const parsed = UserRowSchema.parse(row);
+    const parsed = await validateRow(UserRowDTO, row);
     return this.mapRowToEntity(parsed);
   }
 
@@ -139,8 +198,8 @@ export class PgUserRepository implements UserRepository {
 
   async insert(user: User): Promise<void> {
     const q = `
-    INSERT INTO users (id, password_hash, nickname, email, about_info, phone_number, avatar_file_id, verified, verification_token)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    INSERT INTO users (id, password_hash, nickname, email, about_info, phone_number, avatar_file_id, verified)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
   `;
     await this.pool.query(q, [
       user.id,
@@ -151,7 +210,6 @@ export class PgUserRepository implements UserRepository {
       user.phoneNumber ?? null,
       user.avatarFileId ?? null,
       user.verified ?? false,
-      user.verificationToken ?? null
     ]);
   }
 
@@ -165,8 +223,7 @@ export class PgUserRepository implements UserRepository {
       about_info = $4,
       phone_number = $5,
       avatar_file_id = $6,
-      verification_token = $7,
-      verified = $8
+      verified = $7
     WHERE id = $1
   `;
 
@@ -177,7 +234,6 @@ export class PgUserRepository implements UserRepository {
       user.aboutInfo ?? null,
       user.phoneNumber ?? null,
       user.avatarFileId ?? null,
-      user.verificationToken ?? null,
       user.verified ?? false,
     ]);
   }
@@ -185,32 +241,6 @@ export class PgUserRepository implements UserRepository {
 
   async delete(id: string): Promise<void> {
     await this.pool.query(`DELETE FROM users WHERE id = $1`, [id]);
-  }
-
-  async findByVerificationToken(token: string): Promise<User | null> {
-    const q = `SELECT id, email, nickname, about_info, phone_number, avatar_file_id, verified
-             FROM users WHERE verification_token = $1 LIMIT 1`;
-    const { rows } = await this.pool.query(q, [token]);
-    const row = rows[0];
-    if (!row) return null;
-    const parsed = UserRowSchema.parse(row);
-    return this.mapRowToEntity(parsed);
-  }
-
-  // new method: set token
-  async setVerificationToken(userId: string, token: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE users SET verification_token = $2 WHERE id = $1`,
-      [userId, token]
-    );
-  }
-
-  // new method: mark verified
-  async markVerified(userId: string): Promise<void> {
-    await this.pool.query(
-      `UPDATE users SET verified = true, verification_token = NULL WHERE id = $1`,
-      [userId]
-    );
   }
 
   async findPublicByNickname(nickname: string): Promise<PublicUser> {
@@ -251,10 +281,9 @@ export class PgUserRepository implements UserRepository {
       const { rows } = await this.pool.query(q, [id]);
       const row = rows[0];
       if (!row) return null;
-      const parsed = UserRowSchema.parse(row);
+      const parsed = await validateRow(UserRowDTO, row);
       const user = this.mapRowToEntity(parsed);
       if (!parsed.avatar_file_id) return user;
-      user.avatarUrl = await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, parsed.avatar_file_id);
       return user;
     } catch (err) {
       this.logger.error({ msg: 'findFullById failed', id, err });
@@ -277,7 +306,7 @@ export class PgUserRepository implements UserRepository {
     `;
     try {
       const { rows } = await this.pool.query(q, [userId, limit, offset]);
-      
+
       const posts: PostDto[] = rows.map((r: any) => ({
         id: r.id,
         authorId: r.author_id,
@@ -410,16 +439,9 @@ export class PgUserRepository implements UserRepository {
             undefined,    // phoneNumber
             row.avatar_file_id,
             false,        // verified
-            undefined,    // verificationToken
             undefined     // createdAt
           );
 
-          if (row.avatar_file_id) {
-            user.avatarUrl = await this.s3.getPresignedDownloadUrl(
-              process.env.S3_BUCKET!,
-              row.avatar_file_id
-            );
-          }
 
           return user;
         })
@@ -462,16 +484,8 @@ export class PgUserRepository implements UserRepository {
             undefined,    // phoneNumber
             row.avatar_file_id,
             false,        // verified
-            undefined,    // verificationToken
             undefined     // createdAt
           );
-
-          if (row.avatar_file_id) {
-            user.avatarUrl = await this.s3.getPresignedDownloadUrl(
-              process.env.S3_BUCKET!,
-              row.avatar_file_id
-            );
-          }
 
           return user;
         })
@@ -549,9 +563,9 @@ export class PgUserRepository implements UserRepository {
   }
 
   async updateLastSeen(userId: string): Promise<void> {
-  await this.pool.query(
-    `UPDATE users SET last_seen = now() WHERE id = $1`,
-    [userId]
-  );
-}
+    await this.pool.query(
+      `UPDATE users SET last_seen = now() WHERE id = $1`,
+      [userId]
+    );
+  }
 }

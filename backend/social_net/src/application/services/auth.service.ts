@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from 'bcrypt';
 import { UsersService } from "./users.service";
@@ -6,12 +6,15 @@ import { LoginDto, LoginDtoSchema } from "../dto/user.dto";
 import { User } from "src/domain/entities/user";
 import { randomBytes } from "crypto";
 import nodemailer from 'nodemailer';
+import { USER_REPOSITORY, type UserRepository } from "src/domain/repositories/user.repository";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
+    @Inject(USER_REPOSITORY)
+        private readonly usersRepo: UserRepository,
   ) { }
 
   async login(dto: LoginDto) {
@@ -51,20 +54,8 @@ export class AuthService {
   }
 
   async sendVerificationEmail(user: User) {
-    const to = user.email;
-    const token = randomBytes(32).toString('hex');
-    // console.log(token)
-    await this.usersService.setVerificationToken(user.id, token);
-    // const transporter = nodemailer.createTransport({
-    //   service: 'gmail',
-    //   auth: {
-    //     type: 'OAuth2',
-    //     user: process.env.SMTP_USER,       // your email
-    //     clientId: process.env.GOOGLE_CLIENT_ID,
-    //     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //     refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
-    //   },
-    // });
+  const token = await this.usersRepo.createVerificationTokenForUser(user.id);
+  const link = `${process.env.BACKEND_URL}/auth/verify/${token}`;
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -73,15 +64,15 @@ export class AuthService {
       },
     });
 
-    const info = await transporter.sendMail({
-      from: `"MyApp" <${process.env.SMTP_USER}>`,
-      to,
-      subject: 'Verify your email',
-      html: `<p>Click <a href="${process.env.BACKEND_URL}/auth/verify/${token}">here</a> to verify your account</p>`,
-    });
+  // send email (same as you did). No token stored on User.
+  await transporter.sendMail({
+    from: `"MyApp" <${process.env.SMTP_USER}>`,
+    to: user.email,
+    subject: 'Verify your email',
+    html: `<p>Click <a href="${link}">here</a> to verify your account</p>`,
+  });
+}
 
-    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-  }
 
   async verifyEmail(token: string): Promise<User | null> {
     const user = await this.usersService.verifyByToken(token);

@@ -1,4 +1,4 @@
-export type FileRecord = {
+export type FileDto = {
   id: string;
   owner_id: string;
   name: string;

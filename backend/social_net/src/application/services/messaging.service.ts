@@ -6,7 +6,7 @@ import { MESSAGE_FILES_REPOSITORY, type MessageFilesRepository } from 'src/domai
 import { S3Service } from './s3.service';
 import xss from 'xss';
 import { Message } from 'src/domain/entities/message';
-import { FileRecord } from 'src/infrastructure/persistence/dao/fileDAO';
+import { FileDto } from 'src/infrastructure/persistence/dao/file.dto';
 import { UploadedFile } from '../dto/file.dto';
 
 @Injectable()
@@ -45,14 +45,14 @@ export class MessagingService {
         files.map(async (file) => {
           const key = `messages/${senderId}/${message.id}_${Date.now()}_${file.originalname}`;
           const uploaded = await this.s3.uploadFile(key, file.buffer, file.mimetype);
-          const fileRecord = await this.attachFile(uploaded, senderId, file.originalname);
-          await this.linkFileToMessage(message.id, fileRecord.id);
-          const url = await this.s3.getPresignedDownloadUrl(fileRecord.storage_bucket!, fileRecord.storage_key!);
+          const FileDto = await this.attachFile(uploaded, senderId, file.originalname);
+          await this.linkFileToMessage(message.id, FileDto.id);
+          const url = await this.s3.getPresignedDownloadUrl(FileDto.storage_bucket!, FileDto.storage_key!);
           return {
-            id: fileRecord.id,
+            id: FileDto.id,
             name: file.originalname,
             url,
-            mimeType: fileRecord.name
+            mimeType: FileDto.name
           };
         })
       );
@@ -84,7 +84,7 @@ export class MessagingService {
 
   /** --- Private helpers --- */
 
-  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string, name: string): Promise<FileRecord> {
+  private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string, name: string): Promise<FileDto> {
     // const name = uploaded.storage_key.split('/').pop();
     if (!name) throw new Error('Invalid storage key: cannot determine file name');
     console.log('filename ' + name)

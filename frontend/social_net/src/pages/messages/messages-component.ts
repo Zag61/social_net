@@ -5,7 +5,8 @@ import { map } from 'rxjs';
 import { decodeJwtPayload } from '../../shared/helpers';
 import { DatePipe } from '@angular/common';
 import { MessagesService } from '../../app/features/messages.service';
-import { Message, UiMessage } from '../../app/entities/message';
+import { Message, UiMessage, UploadedFile } from '../../app/entities/message';
+import { plainToInstance } from 'class-transformer';
 
 @Component({
   selector: 'app-messages-component',
@@ -56,12 +57,11 @@ export class MessagesComponent {
   constructor() {
     effect(() => {
       if (this.messagesFromResolver()) {
-        this.messages.set(
-          this.messagesFromResolver()!.map(m => ({
-            ...m,
-            status: 'sent',
-          }))
-        );
+        const msgs = plainToInstance(UiMessage, this.messagesFromResolver()!.map(m => ({
+          ...m,
+          status: 'sent'
+        })));
+        this.messages.set(msgs);
       }
     });
   }
@@ -83,17 +83,17 @@ export class MessagesComponent {
     const tempId = crypto.randomUUID();
     const now = new Date();
 
-    const optimisticMessage: UiMessage = {
-      id: tempId,
-      tempId,
-      senderId: this.currentUserId()!,
-      receiverId: this.nickname()!,
-      text: this.messageText(),
-      sentAt: now,
-      files: [],
-      status: 'sending',
-      editedAt: undefined
-    };
+    const optimisticMessage = new UiMessage(
+      tempId,                     // id
+      this.currentUserId()!,       // senderId
+      this.nickname()!,            // receiverId
+      this.messageText(),          // text
+      now,                         // sentAt
+      [],                         // attachments
+      'sending',                   // status
+      tempId                       // tempId
+    );
+
 
     this.messages.update(msgs => [...msgs, optimisticMessage]);
 
@@ -107,27 +107,48 @@ export class MessagesComponent {
       .subscribe({
         next: (res) => {
           this.messages.update(msgs =>
-            msgs.map(m =>
-              m.tempId === tempId
-                ? {
-                  ...m,
-                  id: res.id,
-                  sentAt: new Date(res.sentAt),
-                  status: 'sent',
-                  files: res.files
-                }
-                : m
+            msgs.map(m => m.tempId === tempId
+              ? (() => {
+                const updated = new UiMessage(
+                  res.id,
+                  m.senderId,
+                  m.receiverId,
+                  m.text,
+                  new Date(res.sentAt),
+                  res.files.map(f => new UploadedFile(f.id, f.name, f.url)),
+                  'sent',
+                  m.tempId
+                );
+                // preserve editedAt if any
+                updated.setEditedAt(m.getEditedAt()!);
+                return updated;
+              })()
+              : m
             )
           );
+
         },
         error: () => {
           this.messages.update(msgs =>
-            msgs.map(m =>
-              m.tempId === tempId
-                ? { ...m, status: 'failed' }
-                : m
+            msgs.map(m => m.tempId === tempId
+              ? (() => {
+                const failed = new UiMessage(
+                  m.id,
+                  m.senderId,
+                  m.receiverId,
+                  m.text,
+                  m.sentAt,
+                  m.attachments,
+                  'failed',
+                  m.tempId
+                );
+                failed.setEditedAt(m.getEditedAt()!);
+                return failed;
+              })()
+              : m
             )
           );
+
         },
       });
 
@@ -142,7 +163,7 @@ export class MessagesComponent {
   isAudio(fileName: string) {
     return /\.(wav|mp3)$/i.test(fileName);
   }
-  getType(fileName:string){
-    return 'video/'+ (fileName.split('.').pop()?.toLowerCase() ?? '');
+  getType(fileName: string) {
+    return 'video/' + (fileName.split('.').pop()?.toLowerCase() ?? '');
   }
 }
