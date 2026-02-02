@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Pool } from 'pg';
 import { User } from 'src/domain/entities/user';
 import { UserRepository } from 'src/domain/repositories/user.repository';
-import { UserRowDTO, validateRow } from './dao/userDAO';
+import { UserRowDTO, validateRow } from './dao/user.dto';
 import { PostDto } from 'src/application/dto/post.dto';
 import { PublicData, PublicUser } from 'src/application/dto/user.dto';
 import { S3Service } from 'src/application/services/s3.service';

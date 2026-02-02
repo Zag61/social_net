@@ -87,7 +87,6 @@ export class MessagingService {
   private async attachFile(uploaded: { storage_bucket: string; storage_key: string }, ownerId: string, name: string): Promise<FileDto> {
     // const name = uploaded.storage_key.split('/').pop();
     if (!name) throw new Error('Invalid storage key: cannot determine file name');
-    console.log('filename ' + name)
     return this.files.create({
       owner_id: ownerId,
       name: name,

@@ -21,14 +21,12 @@ import { Friend } from '../../app/entities/user.types';
   styleUrls: ['./friends.component.scss']
 })
 export class FriendsComponent implements OnInit, OnDestroy {
-  // ---------------- STATE ----------------
   friends = signal<Friend[]>([]);
   searchQuery = signal('');
   addMode = signal(false);
   searchResults = signal<Friend[]>([]);
   openMenuId = signal<number | string | null>(null);
 
-  // pending state for requests (keyed by user id)
   pendingRequests = signal<Record<string, boolean>>({});
   pendingRemovals = signal<Record<string, boolean>>({});
 
@@ -45,22 +43,17 @@ export class FriendsComponent implements OnInit, OnDestroy {
     );
   });
 
-  // ---------------- services ----------------
   private users = inject(UserService);
   private auth = inject(AuthService);
   private presence = inject(PresenceService);
 
-  // ---------------- RxJS ----------------
   private search$ = new Subject<string>();
   private subs = new Subscription();
 
-  // ---------------- lifecycle ----------------
   async ngOnInit() {
-    // load friends
     const friends = await firstValueFrom(this.users.getFriends()) || [];
     this.friends.set(friends.map(f => ({ ...f, online: false })));
 
-    // presence
     this.subs.add(
       this.presence.friendOnline$.subscribe(id =>
         this.friends.update(list =>
@@ -79,25 +72,21 @@ export class FriendsComponent implements OnInit, OnDestroy {
 
     this.presence.connect(this.auth.getToken()!);
 
-    // SEARCH PIPELINE
     this.subs.add(
       this.search$
         .pipe(
           debounceTime(300),
           distinctUntilChanged(),
           switchMap(text => {
-            // local mode → just store query
             if (!this.addMode()) {
               this.searchQuery.set(text);
               return of<Friend[]>([]);
             }
 
-            // add mode + empty → default backend query (list/popular)
             if (!text) {
               return this.users.findPersonByNickname();
             }
 
-            // add mode → backend search
             return this.users.findPersonByNickname(text);
           })
         )
@@ -114,7 +103,6 @@ export class FriendsComponent implements OnInit, OnDestroy {
     this.subs.unsubscribe();
   }
 
-  // ---------------- UI ----------------
   onSearchInput(event: Event) {
     const value = (event.target as HTMLInputElement).value.trim();
     this.search$.next(value);
@@ -124,16 +112,12 @@ export class FriendsComponent implements OnInit, OnDestroy {
     const newMode = !this.addMode();
     this.addMode.set(newMode);
 
-    // reset local UI state
     this.searchQuery.set('');
     this.openMenuId.set(null);
 
-    // trigger initial backend query when entering add mode
     if (newMode) {
-      // emit empty query so pipeline requests default list
       this.search$.next('');
     } else {
-      // leaving add mode: optionally clear results (we keep results cleared)
       this.searchResults.set([]);
     }
   }
@@ -155,21 +139,14 @@ export class FriendsComponent implements OnInit, OnDestroy {
     return this.friends().some(f => f.id === u.id);
   }
 
-  // ---------- Send friend request ----------
   async sendFriendRequest(user: Friend) {
     const id = user.id;
-    // mark pending
     this.pendingRequests.update(p => ({ ...p, [id]: true }));
 
     try {
-      console.log(id)
       await firstValueFrom(this.users.sendFriendRequest(id));
-      // keep pending flag to indicate "requested" state
-      // optionally you may keep it as true or set to a special status map
-      // we'll keep it true so template shows "Requested"
     } catch (err) {
       console.error('Failed to send friend request', err);
-      // rollback pending flag
       this.pendingRequests.update(p => {
         const copy = { ...p };
         delete copy[id];
@@ -178,22 +155,17 @@ export class FriendsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ---------- Remove friend (unfriend) ----------
   async sendUnfriendRequest(friend: Friend) {
     const id = friend.id;
     this.openMenuId.set(null);
 
-    // mark pending removal
     this.pendingRemovals.update(p => ({ ...p, [id]: true }));
 
-    // optimistic UI: remove immediately
     const prev = this.friends();
     this.friends.update(list => list.filter(f => f.id !== id));
 
     try {
       await firstValueFrom(this.users.removeFriend(id));
-      // success -> removed permanently
-      // clear pending flag
       this.pendingRemovals.update(p => {
         const copy = { ...p };
         delete copy[id];
@@ -201,7 +173,6 @@ export class FriendsComponent implements OnInit, OnDestroy {
       });
     } catch (err) {
       console.error('Failed to remove friend', err);
-      // rollback
       this.friends.set(prev);
       this.pendingRemovals.update(p => {
         const copy = { ...p };

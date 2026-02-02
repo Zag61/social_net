@@ -35,6 +35,11 @@ export class WsMessagesService implements OnDestroy {
       // handle reconnection logic if desired
     });
   }
+    disconnect() {
+    if (!this.socket) return;
+    this.socket.disconnect();
+    this.socket = null;
+  }
 
   ngOnDestroy() {
     this.socket?.disconnect();

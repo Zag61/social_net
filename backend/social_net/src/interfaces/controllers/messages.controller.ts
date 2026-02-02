@@ -1,7 +1,6 @@
 // src/messages/messages.controller.ts
 import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/auth.guard';
-import { CreateMessageSchema } from 'src/application/dto/create-message.dto';
 import { MessagingService } from 'src/application/services/messaging.service';
 import { CurrentUser, type UserPayload } from 'src/infrastructure/current-user.decorator';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
@@ -22,23 +21,22 @@ export class MessagesController {
   ) { }
   @Post()
   @HttpCode(HttpStatus.CREATED)
- @UseInterceptors(FilesInterceptor('files', 10, { // <-- 'files' field, max 10 files
-  limits: { fileSize: 1024 * 1024 *1024}, // 1 gb
-}))
+  @UseInterceptors(FilesInterceptor('files', 10, { // <-- 'files' field, max 10 files
+    limits: { fileSize: 1024 * 1024 * 1024 }, // 1 gb
+  }))
   async sendMessage(
     @CurrentUser() user: UserPayload,
-    // @Body(new ZodValidationPipe(CreateMessageSchema)) dto: { receiverNickname: string; text: string },
-    @Body() dto: { receiverNickname: string; text: string ,  tempId?: string},
+    @Body() dto: { receiverNickname: string; text: string, tempId?: string },
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    const { receiverNickname, text , tempId } = dto;
+    const { receiverNickname, text, tempId } = dto;
     const receiverId = await this.userService.getIdByNickname(receiverNickname);
     if (!receiverId) throw new Error('Receiver not found');
 
     const formattedFiles = files?.map(f => ({
       buffer: f.buffer,
       mimetype: f.mimetype,
-      originalname:  Buffer.from(f.originalname, 'latin1').toString('utf8'),
+      originalname: Buffer.from(f.originalname, 'latin1').toString('utf8'),
     }));
     const result = await this.messaging.sendMessage({
       senderId: user.id,
@@ -47,14 +45,14 @@ export class MessagesController {
       files: formattedFiles,
     });
 
-     const payload = {
+    const payload = {
       id: result.message.id,
       senderId: result.message.senderId,
       receiverId: result.message.receiverId,
       text: result.message.text,
       sentAt: result.message.sentAt,
       editedAt: result.message.getEditedAt ? result.message.getEditedAt() : undefined,
-      files: result.attachedFiles, // [{id,name,url}, ...]
+      attachments: result.attachedFiles, // [{id,name,url}, ...]
       tempId: tempId ?? null,
       status: 'sent'
     };
@@ -72,7 +70,7 @@ export class MessagesController {
   ) {
     const { peerNickname, limit } = query as { peerNickname: string; limit: number };
     // console.log(peerNickname, limit)
-    const peerId =  await this.userService.getIdByNickname(peerNickname);
+    const peerId = await this.userService.getIdByNickname(peerNickname);
     const messages = await this.messaging.getConversation(
       user.id,
       peerId ?? '',
@@ -86,8 +84,10 @@ export class MessagesController {
       text: m.text,
       sentAt: m.sentAt,
       editedAt: m.editedAt,
-      files: m.files,
+      attachments: m.files,
     }));
   }
 
+  @Get('chats')
+  async getChats() { }
 }

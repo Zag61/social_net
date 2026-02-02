@@ -1,18 +1,8 @@
-// export interface Message {
-//     id: string;
-//     senderId: string;
-//     receiverId: string;
-//     text: string;
-//     sentAt: Date;
-//     editedAt: Date | undefined;
-//     files: UploadedFile[]
-
 import { UUID } from "./user.types";
 
-// }
+
 import { IsString, IsUrl } from 'class-validator';
-import { IsOptional, IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional } from 'class-validator';
 export class Message {
   private editedAt?: Date;
 
@@ -69,7 +59,7 @@ export class UploadedFile {
 
 export class UiMessage extends Message {
   @IsOptional()
-  status?: 'sending' | 'sent' | 'failed';
+  status?: MessageStatus;
 
   @IsOptional()
   tempId?: string;

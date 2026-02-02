@@ -20,12 +20,58 @@ export class MessagesComponent {
   private msgSevice = inject(MessagesService);
   private ws = inject(WsMessagesService);
   private subs = new Subscription();
-  public messagesFromResolver = toSignal<Message[] | null>(
-    this.route.data.pipe(
-      map(data => data['messages'] ?? null)
-    ),
-    { initialValue: null }
+  private mediaRecorder?: MediaRecorder;
+  private audioChunks: Blob[] = [];
+
+  isRecording = signal(false);
+
+  public messagesFromResolver = toSignal<UiMessage[] | null>(
+  this.route.data.pipe(map(d => d['messages'])),
+  { initialValue: null }
+);
+
+constructor() {
+  effect(() => {
+    const resolved = this.messagesFromResolver();
+    if (resolved) this.messages.set(resolved);
+  });
+
+  this.ws.connect();
+}
+
+ngOnInit() {
+  this.subs.add(
+    this.ws.messages$.subscribe(payload => {
+      const incoming = new UiMessage(
+        payload.id,
+        payload.senderId,
+        payload.receiverId,
+        payload.text,
+        new Date(payload.sentAt),
+        (payload.attachments ?? []).map(
+          (f: any) => new UploadedFile(f.id, f.name, f.url)
+        ),
+        payload.status,
+        payload.tempId
+      );
+
+      this.messages.update(list => {
+        if (incoming.tempId) {
+          const idx = list.findIndex(m => m.tempId === incoming.tempId);
+          if (idx !== -1) {
+            const copy = [...list];
+            copy[idx] = incoming;
+            return copy;
+          }
+        }
+
+        if (list.some(m => m.id === incoming.id)) return list;
+        return [...list, incoming];
+      });
+    })
   );
+}
+
   nickname = toSignal(
     this.route.paramMap.pipe(
       map(params => params.get('nickname'))
@@ -39,7 +85,9 @@ export class MessagesComponent {
     const payload = decodeJwtPayload(match[1]);
     return payload?.id ?? null;
   });
-
+  createObjectUrl(file: File): string {
+    return URL.createObjectURL(file);
+  }
   isOwnMessage = (msg: Message) =>
     msg.senderId === this.currentUserId();
 
@@ -57,60 +105,10 @@ export class MessagesComponent {
 
   messages = signal<UiMessage[]>([]);
 
-  constructor() {
-    effect(() => {
-      if (this.messagesFromResolver()) {
-        const msgs = plainToInstance(UiMessage, this.messagesFromResolver()!.map(m => ({
-          ...m,
-          status: 'sent'
-        })));
-        this.messages.set(msgs);
-      }
-    });
-    this.ws.connect();
-  }
-  async ngOnInit() {
-    this.subs.add(
-      this.ws.messages$.subscribe((payload: any) => {
-        console.log(payload)
-        // normalize payload -> UiMessage instance
-        const incoming = new UiMessage(
-          payload.id,
-          payload.senderId,
-          payload.receiverId,
-          payload.text,
-          new Date(payload.sentAt),
-          (payload.files || []).map((f: any) => new UploadedFile(f.id, f.name, f.url)),
-          'sent',
-          payload.tempId ?? undefined
-        );
-
-        this.messages.update(msgs => {
-          // If payload has tempId, replace optimistic message
-          if (payload.tempId) {
-            const idx = msgs.findIndex(m => m.tempId === payload.tempId);
-            if (idx !== -1) {
-              const updated = [...msgs];
-              // preserve editedAt if any
-              try { incoming.setEditedAt(updated[idx].getEditedAt()!); } catch {}
-              updated[idx] = incoming;
-              return updated;
-            }
-          }
-
-          // Avoid duplicates: if a message with the same id already exists, update it
-          const existsById = msgs.some(m => m.id === incoming.id);
-          if (existsById) {
-            return msgs.map(m => (m.id === incoming.id ? incoming : m));
-          }
-
-          // otherwise append
-          return [...msgs, incoming];
-        });
-      })
-    );
-  }
-  onTextInput(event: Event) {
+  ngOnDestroy() {
+    this.ws.disconnect();
+    this.subs.unsubscribe();
+  } onTextInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
     this.messageText.set(value);
   }
@@ -121,6 +119,52 @@ export class MessagesComponent {
       input.files ? Array.from(input.files) : []
     );
   }
+  async startRecording() {
+    if (this.isRecording()) return;
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    this.audioChunks = [];
+    this.mediaRecorder = new MediaRecorder(stream);
+
+    this.mediaRecorder.ondataavailable = e => {
+      if (e.data.size > 0) this.audioChunks.push(e.data);
+    };
+
+    this.mediaRecorder.onstop = () => {
+      const blob = new Blob(this.audioChunks, { type: 'audio/webm' });
+
+      const file = new File(
+        [blob],
+        `voice-${Date.now()}.webm`,
+        { type: 'audio/webm' }
+      );
+
+      this.attachedFiles.update(files => [...files, file]);
+      stream.getTracks().forEach(t => t.stop());
+    };
+
+    this.mediaRecorder.start();
+    this.isRecording.set(true);
+  }
+  toggleRecording(){
+    if (this.isRecording()){
+      this.stopRecording()
+    } else{
+      this.startRecording()
+    }
+  }
+  stopRecording() {
+    if (!this.mediaRecorder || !this.isRecording()) return;
+
+    this.mediaRecorder.stop();
+    this.isRecording.set(false);
+  }
+removePendingFile(index: number) {
+  this.attachedFiles.update(files =>
+    files.filter((_, i) => i !== index)
+  );
+}
 
   sendMessage() {
     if (!this.canSend() || !this.nickname()) return;
@@ -155,11 +199,12 @@ export class MessagesComponent {
         error: () => {
           this.messages.update(msgs =>
             msgs.map(m => m.tempId === tempId
-              ? (() => { const failed = new UiMessage(
+              ? (() => {
+                const failed = new UiMessage(
                   m.id, m.senderId, m.receiverId, m.text, m.sentAt, m.attachments, 'failed', m.tempId);
-                  failed.setEditedAt(m.getEditedAt()!);
-                  return failed;
-                })()
+                failed.setEditedAt(m.getEditedAt()!);
+                return failed;
+              })()
               : m
             )
           );
@@ -176,9 +221,19 @@ export class MessagesComponent {
     return /\.(mp4)$/i.test(fileName);
   }
   isAudio(fileName: string) {
-    return /\.(wav|mp3)$/i.test(fileName);
+    return /\.(wav|mp3|webm)$/i.test(fileName);
   }
-  getType(fileName: string) {
-    return 'video/' + (fileName.split('.').pop()?.toLowerCase() ?? '');
+  getType(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+
+  switch (ext) {
+    case 'mp3': return 'audio/mpeg';
+    case 'wav': return 'audio/wav';
+    case 'webm': return 'audio/webm';
+    case 'ogg': return 'audio/ogg';
+    case 'mp4': return 'video/mp4';
+    default: return '';
   }
+}
+
 }
