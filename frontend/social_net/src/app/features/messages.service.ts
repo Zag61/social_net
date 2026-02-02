@@ -10,13 +10,12 @@ export class MessagesService {
     getMessages(peerNickname: string, limit: number = 100): Observable<Message[]> {
         return this.http.get<Message[]>(`http://localhost:3000/messages?peerNickname=${encodeURIComponent(peerNickname)}&limit=${encodeURIComponent(limit)}`, { withCredentials: true });
     }
-    sendMessages(receiverNickname: string, text: string, files: File[]): Observable<SendMessageResponse> {
+    sendMessages(receiverNickname: string, text: string, files: File[], tempId?: string): Observable<SendMessageResponse> {
         const formData = new FormData();
 
         formData.append('receiverNickname', receiverNickname);
         formData.append('text', text);
-
-        // formData.append('files', files);
+        if (tempId) formData.append('tempId', tempId);
         files.forEach(file => formData.append('files', file));
 
         return this.http.post<SendMessageResponse>(

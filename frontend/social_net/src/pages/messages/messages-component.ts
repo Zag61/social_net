@@ -1,12 +1,13 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs';
+import { map, Subscription } from 'rxjs';
 import { decodeJwtPayload } from '../../shared/helpers';
 import { DatePipe } from '@angular/common';
 import { MessagesService } from '../../app/features/messages.service';
 import { Message, UiMessage, UploadedFile } from '../../app/entities/message';
 import { plainToInstance } from 'class-transformer';
+import { WsMessagesService } from '../../app/features/ws-messages.service';
 
 @Component({
   selector: 'app-messages-component',
@@ -17,6 +18,8 @@ import { plainToInstance } from 'class-transformer';
 export class MessagesComponent {
   private route = inject(ActivatedRoute);
   private msgSevice = inject(MessagesService);
+  private ws = inject(WsMessagesService);
+  private subs = new Subscription();
   public messagesFromResolver = toSignal<Message[] | null>(
     this.route.data.pipe(
       map(data => data['messages'] ?? null)
@@ -64,6 +67,48 @@ export class MessagesComponent {
         this.messages.set(msgs);
       }
     });
+    this.ws.connect();
+  }
+  async ngOnInit() {
+    this.subs.add(
+      this.ws.messages$.subscribe((payload: any) => {
+        console.log(payload)
+        // normalize payload -> UiMessage instance
+        const incoming = new UiMessage(
+          payload.id,
+          payload.senderId,
+          payload.receiverId,
+          payload.text,
+          new Date(payload.sentAt),
+          (payload.files || []).map((f: any) => new UploadedFile(f.id, f.name, f.url)),
+          'sent',
+          payload.tempId ?? undefined
+        );
+
+        this.messages.update(msgs => {
+          // If payload has tempId, replace optimistic message
+          if (payload.tempId) {
+            const idx = msgs.findIndex(m => m.tempId === payload.tempId);
+            if (idx !== -1) {
+              const updated = [...msgs];
+              // preserve editedAt if any
+              try { incoming.setEditedAt(updated[idx].getEditedAt()!); } catch {}
+              updated[idx] = incoming;
+              return updated;
+            }
+          }
+
+          // Avoid duplicates: if a message with the same id already exists, update it
+          const existsById = msgs.some(m => m.id === incoming.id);
+          if (existsById) {
+            return msgs.map(m => (m.id === incoming.id ? incoming : m));
+          }
+
+          // otherwise append
+          return [...msgs, incoming];
+        });
+      })
+    );
   }
   onTextInput(event: Event) {
     const value = (event.target as HTMLInputElement).value;
@@ -95,7 +140,7 @@ export class MessagesComponent {
     );
 
 
-    this.messages.update(msgs => [...msgs, optimisticMessage]);
+    // this.messages.update(msgs => [...msgs, optimisticMessage]);
 
     const text = this.messageText();
     const files = this.attachedFiles();
@@ -106,45 +151,15 @@ export class MessagesComponent {
       .sendMessages(this.nickname()!, text, files)
       .subscribe({
         next: (res) => {
-          this.messages.update(msgs =>
-            msgs.map(m => m.tempId === tempId
-              ? (() => {
-                const updated = new UiMessage(
-                  res.id,
-                  m.senderId,
-                  m.receiverId,
-                  m.text,
-                  new Date(res.sentAt),
-                  res.files.map(f => new UploadedFile(f.id, f.name, f.url)),
-                  'sent',
-                  m.tempId
-                );
-                // preserve editedAt if any
-                updated.setEditedAt(m.getEditedAt()!);
-                return updated;
-              })()
-              : m
-            )
-          );
-
         },
         error: () => {
           this.messages.update(msgs =>
             msgs.map(m => m.tempId === tempId
-              ? (() => {
-                const failed = new UiMessage(
-                  m.id,
-                  m.senderId,
-                  m.receiverId,
-                  m.text,
-                  m.sentAt,
-                  m.attachments,
-                  'failed',
-                  m.tempId
-                );
-                failed.setEditedAt(m.getEditedAt()!);
-                return failed;
-              })()
+              ? (() => { const failed = new UiMessage(
+                  m.id, m.senderId, m.receiverId, m.text, m.sentAt, m.attachments, 'failed', m.tempId);
+                  failed.setEditedAt(m.getEditedAt()!);
+                  return failed;
+                })()
               : m
             )
           );

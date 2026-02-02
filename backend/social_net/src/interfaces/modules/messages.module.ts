@@ -12,6 +12,7 @@ import { FILES_REPOSITORY } from 'src/domain/repositories/files.repository';
 import { MESSAGE_FILES_REPOSITORY } from 'src/domain/repositories/message-files.repository';
 import { S3Service } from 'src/application/services/s3.service';
 import { UsersModule } from './users.module';
+import { MessagesGateway } from '../gateways/message.gateway';
 
 @Module({
   imports: [forwardRef(() => DBModule), UsersModule],
@@ -19,6 +20,7 @@ import { UsersModule } from './users.module';
   providers: [
     MessagingService,
     S3Service,
+    MessagesGateway,
     PostgresPoolProvider,
     {
       provide: MESSAGE_REPOSITORY,

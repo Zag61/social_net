@@ -9,6 +9,7 @@ import { GetMessagesSchema } from 'src/application/dto/get.messages.schema';
 import { S3Service } from 'src/application/services/s3.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { UsersService } from 'src/application/services/users.service';
+import { MessagesGateway } from '../gateways/message.gateway';
 
 @UseGuards(JwtAuthGuard)
 @Controller('messages')
@@ -16,20 +17,21 @@ export class MessagesController {
   constructor(
     private readonly messaging: MessagingService,
     private readonly s3: S3Service,
-    private readonly userService: UsersService
+    private readonly userService: UsersService,
+    private readonly messagesGateway: MessagesGateway,
   ) { }
   @Post()
   @HttpCode(HttpStatus.CREATED)
  @UseInterceptors(FilesInterceptor('files', 10, { // <-- 'files' field, max 10 files
-  limits: { fileSize: 10 * 1024 * 1024 *1024}, // 10 MB
+  limits: { fileSize: 1024 * 1024 *1024}, // 1 gb
 }))
   async sendMessage(
     @CurrentUser() user: UserPayload,
     // @Body(new ZodValidationPipe(CreateMessageSchema)) dto: { receiverNickname: string; text: string },
-    @Body() dto: { receiverNickname: string; text: string },
+    @Body() dto: { receiverNickname: string; text: string ,  tempId?: string},
     @UploadedFiles() files?: Express.Multer.File[],
   ) {
-    const { receiverNickname, text } = dto;
+    const { receiverNickname, text , tempId } = dto;
     const receiverId = await this.userService.getIdByNickname(receiverNickname);
     if (!receiverId) throw new Error('Receiver not found');
 
@@ -45,15 +47,22 @@ export class MessagesController {
       files: formattedFiles,
     });
 
-     return {
+     const payload = {
       id: result.message.id,
       senderId: result.message.senderId,
       receiverId: result.message.receiverId,
       text: result.message.text,
       sentAt: result.message.sentAt,
-      editedAt: result.message.getEditedAt,
-      files: result.attachedFiles, // this now includes all uploaded files with {id, name, url}
+      editedAt: result.message.getEditedAt ? result.message.getEditedAt() : undefined,
+      files: result.attachedFiles, // [{id,name,url}, ...]
+      tempId: tempId ?? null,
+      status: 'sent'
     };
+    // emit to both sender and receiver
+    this.messagesGateway.emitMessage(payload);
+
+    // return minimal ack if you want (client should rely on WS)
+    return { ok: true, tempId: tempId ?? null };
   }
 
   @Get()
