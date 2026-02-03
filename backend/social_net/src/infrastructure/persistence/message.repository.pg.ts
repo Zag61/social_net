@@ -99,6 +99,27 @@ export class PgMessageRepository implements MessageRepository {
       );
     });
   }
+  
+  /**
+ * Delete all messages between two users
+ */
+async deleteChatBetweenUsers(userA: string, userB: string): Promise<void> {
+  const query = `
+    DELETE FROM messages
+    WHERE 
+      (sender_id = $1 AND receiver_user_id = $2)
+      OR
+      (sender_id = $2 AND receiver_user_id = $1)
+  `;
+  try {
+    await this.pool.query(query, [userA, userB]);
+    this.logger.log(`Deleted chat between ${userA} and ${userB}`);
+  } catch (err) {
+    this.logger.error(`Failed to delete chat between ${userA} and ${userB}`, err);
+    throw err;
+  }
+}
+
 
   /**
    * OPTIONAL helper: fetch last messages in a channel (if you later need it).

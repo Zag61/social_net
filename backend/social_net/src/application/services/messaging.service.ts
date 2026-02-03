@@ -117,6 +117,9 @@ export class MessagingService {
   );
 }
 
+  async deleteChat(userId: string, friendId: string): Promise<void> {
+  await this.messages.deleteChatBetweenUsers(userId, friendId);
+}
 
 
 

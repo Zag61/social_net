@@ -1,29 +1,31 @@
 <section class="chats">
-    <h1 class="title">Chats</h1>
+  <h1 class="title">Chats</h1>
 
-    @if (chats.length === 0) {
+  @if (chats.length === 0) {
     <div class="empty">No chats yet</div>
-    } @else {
+  } @else {
     <ul class="list">
-        @for (chat of chats; track chat.user.id) {
+      @for (chat of chats; track chat.user.id) {
         <li class="item">
-            <img class="avatar" [src]="chat.avatarUrl" />
+          <img class="avatar" [src]="chat.avatarUrl" />
 
-            <div class="body">
-                <div class="username">{{ chat.user.username }}</div>
-                <div class="preview">
-                    {{ chat.lastMessage?.text ?? '—' }}
-                </div>
+          <div class="body">
+            <div class="username">{{ chat.user.username }}</div>
+            <div class="preview">
+              {{ chat.lastMessage?.text ?? '—' }}
             </div>
+          </div>
 
-            @if (chat.lastMessage) {
+          @if (chat.lastMessage) {
             <time class="time">
-                {{ chat.lastMessage.sentAt | date:'shortTime' }}
+              {{ chat.lastMessage.sentAt | date:'shortTime' }}
             </time>
-            }
-        </li>
-        }
-    </ul>
-    }
+          }
 
+          <!-- Delete button -->
+          <button class="delete-btn" (click)="deleteChat(chat)">🗑 Delete</button>
+        </li>
+      }
+    </ul>
+  }
 </section>

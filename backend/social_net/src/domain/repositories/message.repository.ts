@@ -6,4 +6,5 @@ export interface MessageRepository {
   add(message: Message): Promise<void>;
   // optionally: findById, listByConversation, markRead, etc.
   getLastBetweenUsers(userA: string, userB: string, limit: number): Promise<Message[]>;
+  deleteChatBetweenUsers(userA: string, userB: string): Promise<void>;
 }

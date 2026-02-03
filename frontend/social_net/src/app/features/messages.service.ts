@@ -14,6 +14,14 @@ export class MessagesService {
     getChats(): Observable<ChatDto[]> {
         return this.http.get<ChatDto[]>(`http://localhost:3000/messages/chats`, { withCredentials: true });
     }
+    deleteChat(secondUserId: string) {
+        return this.http.post<{ success: boolean }>(
+            `http://localhost:3000/messages/drop-chat/${encodeURIComponent(secondUserId)}`,
+            null, // no body
+            { withCredentials: true } // send cookies/session
+        );
+    }
+
     sendMessages(receiverNickname: string, text: string, files: File[], tempId?: string): Observable<SendMessageResponse> {
         const formData = new FormData();
 

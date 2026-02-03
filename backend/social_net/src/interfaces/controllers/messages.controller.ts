@@ -1,5 +1,5 @@
 // src/messages/messages.controller.ts
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFiles, Param } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/auth.guard';
 import { MessagingService } from 'src/application/services/messaging.service';
 import { CurrentUser, type UserPayload } from 'src/infrastructure/current-user.decorator';
@@ -87,6 +87,16 @@ export class MessagesController {
       attachments: m.files,
     }));
   }
+
+  @Post('drop-chat/:friendId')
+async dropChat(
+  @CurrentUser() user: UserPayload,
+  @Param('friendId') friendId: string,
+) {
+  await this.messaging.deleteChat(user.id, friendId);
+  return { success: true };
+}
+
 
   @Get('chats')
   async getChats( @CurrentUser() user: UserPayload,): Promise<ChatDto[]> {
