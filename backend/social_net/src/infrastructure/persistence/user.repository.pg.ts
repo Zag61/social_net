@@ -139,6 +139,12 @@ async verifyByToken(token: string): Promise<User | null> {
       post.attachmentsurls = byPostId.get(post.id) ?? [];
     }
   }
+  async getAvatarUrl(userId: string){
+    const user = await this.findById(userId);
+    if (!user || !user.avatarFileId) return ;
+    const url = await this.s3.getPresignedDownloadUrl(process.env.S3_BUCKET!, user.avatarFileId);
+    return url;
+  }
 
   async findByEmail(email: string): Promise<User | null> {
     const q = `

@@ -10,6 +10,8 @@ import { AccountResolver } from '../pages/user-profile/AccountResolver';
 import { MessagesComponent } from '../pages/messages/messages-component';
 import { messageResolver } from '../pages/messages/message.resolver';
 import { FriendsComponent } from '../pages/friends/friends.component';
+import { MyChats } from '../pages/my-chats/my-chats';
+import { chatResolver } from '../pages/my-chats/my-chats.resolver';
 
 export const routes: Routes = [
   { path: '', component: AuthPageComponent },
@@ -20,5 +22,6 @@ export const routes: Routes = [
   { path: 'account', component: UserProfileComponent, resolve: { user: AccountResolver } },
   { path: 'messages/:nickname', component: MessagesComponent, resolve: {messages : messageResolver}},
   { path: 'friends', component: FriendsComponent },
+  { path: 'my_chats', component: MyChats , resolve: {chats : chatResolver}},
   { path: '**', redirectTo: '' }
 ];

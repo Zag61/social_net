@@ -8,6 +8,7 @@ import xss from 'xss';
 import { Message } from 'src/domain/entities/message';
 import { FileDto } from 'src/infrastructure/persistence/dao/file.dto';
 import { UploadedFile } from '../dto/file.dto';
+import { ChatDto, MessageDto } from '../dto/chat.dto';
 
 @Injectable()
 export class MessagingService {
@@ -81,6 +82,44 @@ export class MessagingService {
       })),
     );
   }
+
+  async getChats(userId: string): Promise<ChatDto[]> {
+  function toMessageDto(message: Message): MessageDto {
+    return {
+      id: message.id,
+      text: message.text,
+      senderId: message.senderId,
+      sentAt: message.sentAt.toISOString(),
+    };
+  }
+
+  const friendsIds = await this.users.getFriendsIds(userId);
+  const friendsInfo = await this.users.getFriendsInfo(friendsIds);
+  if (!friendsInfo) return [];
+
+  return Promise.all(
+    friendsInfo.map(async (friend): Promise<ChatDto> => {
+      const messages = await this.messages.getLastBetweenUsers(userId, friend.id, 1);
+      const lastMessage = messages?.[0] ? toMessageDto(messages[0]) : null;
+
+      // if getAvatarUrl is synchronous, remove await
+      const avatarUrl = await this.users.getAvatarUrl(friend.id);
+
+      return {
+        user: {
+          id: friend.id,
+          username: friend.nickname, // changed from id to nickname
+        },
+        lastMessage,
+        avatarUrl,
+      };
+    })
+  );
+}
+
+
+
+
 
   /** --- Private helpers --- */
 

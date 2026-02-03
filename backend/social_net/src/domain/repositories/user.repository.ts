@@ -24,5 +24,6 @@ export interface UserRepository {
   deleteFriendship(userAId: string, userBId: string): Promise<void>;
   updateLastSeen(userId: string): Promise<void>;
   createVerificationTokenForUser(userId: string, ttlMs?: number): Promise<string>;
+  getAvatarUrl(userId: string);
 }
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');

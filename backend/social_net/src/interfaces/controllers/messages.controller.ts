@@ -1,21 +1,21 @@
 // src/messages/messages.controller.ts
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/auth.guard';
 import { MessagingService } from 'src/application/services/messaging.service';
 import { CurrentUser, type UserPayload } from 'src/infrastructure/current-user.decorator';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import { GetMessagesSchema } from 'src/application/dto/get.messages.schema';
 import { S3Service } from 'src/application/services/s3.service';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { UsersService } from 'src/application/services/users.service';
 import { MessagesGateway } from '../gateways/message.gateway';
+import { ChatDto } from 'src/application/dto/chat.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('messages')
 export class MessagesController {
   constructor(
     private readonly messaging: MessagingService,
-    private readonly s3: S3Service,
     private readonly userService: UsersService,
     private readonly messagesGateway: MessagesGateway,
   ) { }
@@ -89,5 +89,7 @@ export class MessagesController {
   }
 
   @Get('chats')
-  async getChats() { }
+  async getChats( @CurrentUser() user: UserPayload,): Promise<ChatDto[]> {
+    return this.messaging.getChats(user.id);
+  }
 }
