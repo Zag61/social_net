@@ -10,12 +10,14 @@ import { PgUserRepository } from "src/infrastructure/persistence/user.repository
 import { PresenceService } from "src/application/services/presence.service";
 import { PresenceGateway } from "../gateways/presence.gateway";
 import { JwtService } from "@nestjs/jwt";
+import { CallGateway } from "../gateways/call.gateway";
 
 @Module({
     providers: [UsersService,
         JwtService,
         PresenceService,
         PresenceGateway,
+        CallGateway,
     {
         provide: USER_REPOSITORY,
         useFactory: (pool: Pool, s3: S3Service) =>

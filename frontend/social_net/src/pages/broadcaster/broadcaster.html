@@ -1,0 +1,17 @@
+<div class="call-container">
+  <h2>📹 Broadcaster</h2>
+
+  <video
+    #video
+    autoplay
+    muted
+    playsinline
+    class="video"
+  ></video>
+
+  <div class="controls">
+    <button (click)="startCall()">Start Call</button>
+    <button (click)="toggleMic()">Toggle Mic</button>
+    <button (click)="toggleCam()">Toggle Camera</button>
+  </div>
+</div>

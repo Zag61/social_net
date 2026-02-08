@@ -18,33 +18,28 @@ export class PresenceService implements OnDestroy {
     this.socket = io(`ws://localhost:3002/`, {
       auth: { token },
       transports: ['websocket'],
-      autoConnect: false, // 👈 IMPORTANT
+      autoConnect: false,
     });
 
     // REGISTER LISTENERS FIRST
     this.socket.on('friend:online', (friendId: string) => {
-      console.log('friend:online received', friendId);
       this.friendOnline$.next(friendId);
     });
 
     this.socket.on('friend:offline', (friendId: string) => {
-      console.log('friend:offline received', friendId);
       this.friendOffline$.next(friendId);
     });
 
     this.socket.on('connect', () => {
-      console.log('Connected to presence socket', this.socket?.id);
       this.heartbeatInterval = setInterval(() => {
         this.socket?.emit('presence:heartbeat');
       }, 25000);
     });
 
     this.socket.on('disconnect', () => {
-      console.log('disconnected from presence socket');
       clearInterval(this.heartbeatInterval);
     });
 
-    // NOW connect
     this.socket.connect();
 
   }

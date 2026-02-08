@@ -12,6 +12,8 @@ import { messageResolver } from '../pages/messages/message.resolver';
 import { FriendsComponent } from '../pages/friends/friends.component';
 import { MyChats } from '../pages/my-chats/my-chats';
 import { chatResolver } from '../pages/my-chats/my-chats.resolver';
+import { Broadcaster } from '../pages/broadcaster/broadcaster';
+import { Viewer } from '../pages/viewer/viewer';
 
 export const routes: Routes = [
   { path: '', component: AuthPageComponent },
@@ -23,5 +25,7 @@ export const routes: Routes = [
   { path: 'messages/:nickname', component: MessagesComponent, resolve: {messages : messageResolver}},
   { path: 'friends', component: FriendsComponent },
   { path: 'my_chats', component: MyChats , resolve: {chats : chatResolver}},
+  { path: 'broadcaster', component: Broadcaster},
+  { path: 'viewer', component: Viewer},
   { path: '**', redirectTo: '' }
 ];

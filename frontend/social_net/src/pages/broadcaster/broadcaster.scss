@@ -1,0 +1,17 @@
+.call-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+}
+
+.video {
+  width: 100%;
+  background: black;
+  border-radius: 12px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
