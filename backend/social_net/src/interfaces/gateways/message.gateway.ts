@@ -8,10 +8,7 @@ import { Server, Socket } from 'socket.io';
 import { verify } from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common';
 
-@WebSocketGateway({ namespace: '/messages', cors: {
-    origin: 'http://localhost:4200',
-    credentials: true,
-  }, })
+@WebSocketGateway({ namespace: '/messages' })
 @Injectable()
 export class MessagesGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;

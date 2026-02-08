@@ -2,6 +2,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Subject, Observable } from 'rxjs';
+import { environment } from '../../environment';
 
 @Injectable({ providedIn: 'root' })
 export class WsMessagesService implements OnDestroy {
@@ -18,13 +19,13 @@ export class WsMessagesService implements OnDestroy {
     const tokenMatch = document.cookie.match(/access_token=([^;]+)/);
     const token = tokenMatch?.[1];
 
-    this.socket = io(`ws://localhost:3000/messages`, {
+    this.socket = io(`${environment.apiBaseUrl}/messages`, {
       auth: { token },
       transports: ['websocket'],
     });
 
     this.socket.on('connect', () => {
-      // console.log('ws connected');
+      console.log('ws connected');
     });
 
     this.socket.on('message', (payload: any) => {

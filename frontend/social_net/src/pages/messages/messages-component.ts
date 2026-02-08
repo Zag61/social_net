@@ -26,51 +26,51 @@ export class MessagesComponent {
   isRecording = signal(false);
 
   public messagesFromResolver = toSignal<UiMessage[] | null>(
-  this.route.data.pipe(map(d => d['messages'])),
-  { initialValue: null }
-);
-
-constructor() {
-  effect(() => {
-    const resolved = this.messagesFromResolver();
-    if (resolved) this.messages.set(resolved);
-  });
-
-  this.ws.connect();
-}
-
-ngOnInit() {
-  this.subs.add(
-    this.ws.messages$.subscribe(payload => {
-      const incoming = new UiMessage(
-        payload.id,
-        payload.senderId,
-        payload.receiverId,
-        payload.text,
-        new Date(payload.sentAt),
-        (payload.attachments ?? []).map(
-          (f: any) => new UploadedFile(f.id, f.name, f.url)
-        ),
-        payload.status,
-        payload.tempId
-      );
-
-      this.messages.update(list => {
-        if (incoming.tempId) {
-          const idx = list.findIndex(m => m.tempId === incoming.tempId);
-          if (idx !== -1) {
-            const copy = [...list];
-            copy[idx] = incoming;
-            return copy;
-          }
-        }
-
-        if (list.some(m => m.id === incoming.id)) return list;
-        return [...list, incoming];
-      });
-    })
+    this.route.data.pipe(map(d => d['messages'])),
+    { initialValue: null }
   );
-}
+
+  constructor() {
+    effect(() => {
+      const resolved = this.messagesFromResolver();
+      if (resolved) this.messages.set(resolved);
+    });
+
+    this.ws.connect();
+  }
+
+  ngOnInit() {
+    this.subs.add(
+      this.ws.messages$.subscribe(payload => {
+        const incoming = new UiMessage(
+          payload.id,
+          payload.senderId,
+          payload.receiverId,
+          payload.text,
+          new Date(payload.sentAt),
+          (payload.attachments ?? []).map(
+            (f: any) => new UploadedFile(f.id, f.name, f.url)
+          ),
+          payload.status,
+          payload.tempId
+        );
+
+        this.messages.update(list => {
+          if (incoming.tempId) {
+            const idx = list.findIndex(m => m.tempId === incoming.tempId);
+            if (idx !== -1) {
+              const copy = [...list];
+              copy[idx] = incoming;
+              return copy;
+            }
+          }
+
+          if (list.some(m => m.id === incoming.id)) return list;
+          return [...list, incoming];
+        });
+      })
+    );
+  }
 
   nickname = toSignal(
     this.route.paramMap.pipe(
@@ -85,8 +85,19 @@ ngOnInit() {
     const payload = decodeJwtPayload(match[1]);
     return payload?.id ?? null;
   });
+  // Внутри класса MessagesComponent
+  private objectUrlCache = new WeakMap<File, string>();
+
   createObjectUrl(file: File): string {
-    return URL.createObjectURL(file);
+    // Если мы уже создавали URL для этого конкретного объекта File, возвращаем его
+    if (this.objectUrlCache.has(file)) {
+      return this.objectUrlCache.get(file)!;
+    }
+
+    // Если нет — создаем, сохраняем и возвращаем
+    const url = URL.createObjectURL(file);
+    this.objectUrlCache.set(file, url);
+    return url;
   }
   isOwnMessage = (msg: Message) =>
     msg.senderId === this.currentUserId();
@@ -147,10 +158,10 @@ ngOnInit() {
     this.mediaRecorder.start();
     this.isRecording.set(true);
   }
-  toggleRecording(){
-    if (this.isRecording()){
+  toggleRecording() {
+    if (this.isRecording()) {
       this.stopRecording()
-    } else{
+    } else {
       this.startRecording()
     }
   }
@@ -160,10 +171,15 @@ ngOnInit() {
     this.mediaRecorder.stop();
     this.isRecording.set(false);
   }
-removePendingFile(index: number) {
-  this.attachedFiles.update(files =>
-    files.filter((_, i) => i !== index)
-  );
+  removePendingFile(index: number) {
+  this.attachedFiles.update(files => {
+    const file = files[index];
+    if (file && this.objectUrlCache.has(file)) {
+      URL.revokeObjectURL(this.objectUrlCache.get(file)!);
+      // WeakMap сама очистится, так как ссылок на file больше не будет
+    }
+    return files.filter((_, i) => i !== index);
+  });
 }
 
   sendMessage() {
@@ -224,16 +240,16 @@ removePendingFile(index: number) {
     return /\.(wav|mp3|webm)$/i.test(fileName);
   }
   getType(fileName: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase();
+    const ext = fileName.split('.').pop()?.toLowerCase();
 
-  switch (ext) {
-    case 'mp3': return 'audio/mpeg';
-    case 'wav': return 'audio/wav';
-    case 'webm': return 'audio/webm';
-    case 'ogg': return 'audio/ogg';
-    case 'mp4': return 'video/mp4';
-    default: return '';
+    switch (ext) {
+      case 'mp3': return 'audio/mpeg';
+      case 'wav': return 'audio/wav';
+      case 'webm': return 'audio/webm';
+      case 'ogg': return 'audio/ogg';
+      case 'mp4': return 'video/mp4';
+      default: return '';
+    }
   }
-}
 
 }

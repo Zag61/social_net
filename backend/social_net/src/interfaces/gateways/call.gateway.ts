@@ -13,10 +13,6 @@ import { Injectable } from '@nestjs/common';
 
 @WebSocketGateway({
   namespace: '/call',
-  cors: {
-    origin: 'http://localhost:4200',
-    credentials: true,
-  },
 })
 @Injectable()
 export class CallGateway implements OnGatewayConnection {

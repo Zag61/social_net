@@ -9,7 +9,17 @@ export class PresenceService {
 
   constructor() {
     this.redis = new Redis(process.env.REDIS_URL as string);
-    this.logger.log('Redis client id: ' + (this.redis as any).options?.connectionName);
+    this.redis.on('connect', () => {
+      this.logger.log('Redis connected successfully');
+    });
+
+    this.redis.on('ready', () => {
+      this.logger.log('Redis is ready to receive commands');
+    });
+
+    this.redis.on('error', (err) => {
+      this.logger.error('Redis Error: ', err);
+    });
   }
 
   private countKey(userId: string) { return `presence:count:${userId}`; }

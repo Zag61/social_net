@@ -48,15 +48,7 @@ export class SimpleAuthCheckComponent implements OnInit {
     // Get the token from the cookie
     // console.log('here')
     const token = getCookie('access_token');
-    console.log(token)
-    // if (!authCookie) {
-    //   throw new Error('No authorization cookie found');
-    // }
-    // console.log('here13')
-    // console.log(authCookie)
-    // The cookie value is URL-encoded, so decode it
-    // const token = decodeURIComponent(authCookie);
-// console.log(token)
+
     const response = await fetch('http://localhost:3000/auth/check-token', {
       method: 'POST',
       credentials: 'include', // We still send the cookie, but also set the header
@@ -65,12 +57,7 @@ export class SimpleAuthCheckComponent implements OnInit {
         // 'Authorization': token, // This should be "Bearer <token>"
       },
     });
-  //   const response= await fetch('http://localhost:3000/auth/check-token', {
-  // method: 'POST',
-  // headers: {
-  //   Authorization: `Bearer ${token}`,
-  // },
-// });
+
 
 
     const data = await response.json();

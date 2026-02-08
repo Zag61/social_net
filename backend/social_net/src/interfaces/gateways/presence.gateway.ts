@@ -22,7 +22,6 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayConnection, OnGa
 
   @SubscribeMessage('newMessage')
   handleNewMessage(@MessageBody() message: any) {
-    // console.log(client.id)
     console.log(message)
   }
 
@@ -39,16 +38,11 @@ export class PresenceGateway implements OnGatewayInit, OnGatewayConnection, OnGa
 
       const userId = payload.sub ?? payload.id;
       (client as any).userId = userId;
-      console.log(userId)
-      // 🔑 join personal room
       client.join(`user:${userId}`);
 
       // 🔼 mark online
       const newCount = await this.presence.markConnected(userId);
       const becameOnline = newCount === 1;
-      console.log(newCount)
-      console.log(userId)
-      console.log(client.rooms.has(`user:${userId}`))
       const friends = await this.usersService.getFriendsIds(userId);
 
     // 1️⃣ Notify connected friends that this user is online

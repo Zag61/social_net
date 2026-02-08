@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { TokenService } from './token.service';
 import { AuthResponse, LoginDto, RegisterDto } from '../entities/auth.types';
+import { environment } from '../../environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -12,13 +13,11 @@ export class AuthService {
   private tokenService = inject(TokenService);
   private router = inject(Router);
   
-  private api = 'http://localhost:3000';
-
   // Typed login method
   async login(dto: LoginDto): Promise<AuthResponse> {
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.api}/auth/login`, dto, {
+        this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/login`, dto, {
           withCredentials: true,
         })
       );
@@ -38,7 +37,7 @@ export class AuthService {
     
     try {
       const response = await firstValueFrom(
-        this.http.post<AuthResponse>(`${this.api}/auth/register`, dto)
+        this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/register`, dto)
       );
       
       // Store the token
@@ -52,13 +51,13 @@ export class AuthService {
 
   // Start Google OAuth
   startGoogleAuth(): void {
-    window.location.href = `${this.api}/auth/google`;
+    window.location.href = `${environment.apiBaseUrl}/auth/google`;
   }
 
   // Check authentication status with server
   async checkAuth(): Promise<AuthResponse> {
     const response = await firstValueFrom(
-      this.http.post<AuthResponse>(`${this.api}/auth/check-token`, {}, {
+      this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/check-token`, {}, {
         withCredentials: true,
       })
     );
@@ -73,7 +72,7 @@ export class AuthService {
 
   // Check session (returns observable for subscription)
   checkSession() {
-    return this.http.post<AuthResponse>(`${this.api}/auth/check-token`, {}, {
+    return this.http.post<AuthResponse>(`${environment.apiBaseUrl}/auth/check-token`, {}, {
       withCredentials: true,
     });
   }
@@ -82,7 +81,7 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       await firstValueFrom(
-        this.http.post(`${this.api}/auth/logout`, {}, {
+        this.http.post(`${environment.apiBaseUrl}/auth/logout`, {}, {
           withCredentials: true,
         })
       );
