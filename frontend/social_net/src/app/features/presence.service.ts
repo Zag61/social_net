@@ -15,7 +15,7 @@ export class PresenceService implements OnDestroy {
   connect(token: string) {
     if (this.socket) return;
 
-    this.socket = io(`ws://192.168.1.153:3002/`, {
+    this.socket = io(`ws://localhost:3002/`, {
       auth: { token },
       transports: ['websocket'],
       autoConnect: false,

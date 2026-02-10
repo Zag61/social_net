@@ -1,17 +1,30 @@
-<div class="call-container">
-  <h2>📹 Broadcaster</h2>
+<!-- broadcaster.component.html -->
+<div class="call-page">
+  <h2 class="title">WebRTC Call</h2>
 
-  <video
-    #video
-    autoplay
-    muted
-    playsinline
-    class="video"
-  ></video>
+  <div class="videos">
+    <video #localVideo autoplay playsinline class="video local-video"></video>
+    <video #remoteVideo autoplay playsinline class="video remote-video"></video>
+  </div>
 
   <div class="controls">
-    <button (click)="startCall()">Start Call</button>
-    <button (click)="toggleMic()">Toggle Mic</button>
-    <button (click)="toggleCam()">Toggle Camera</button>
+    <input
+      type="text"
+      placeholder="User ID to call"
+      class="input-userid"
+      (input)="onTyping($event)"
+      [value]="remoteUserName()"
+    />
+
+    <button class="btn btn-call" (click)="startCall()">📞 Call</button>
+
+    @if (pendingOffer();) {
+      <button class="btn btn-accept" (click)="acceptCall()">✅ Accept</button>
+      <p class="incoming-text">Incoming call from {{remoteUserId()}}…</p>
+    } @else {
+      <p class="no-call-text">No incoming calls</p>
+    }
+
+    <button class="btn btn-end" (click)="endCall()">❌ End</button>
   </div>
 </div>
