@@ -1,0 +1,34 @@
+# Учебный проект
+Приложение было создано для знакомства с Nest & Angular при написании простой соц. сети. Отработаны технологии WebRTC, web-socket, работа с BLOB файлами с S3 хранилищами, основными инструментами nest: guards,pipes, interceptors, decorators и т.д., stand-alone компонентами angular. Backend написан с опорой на идею чистой архитектуры, а front спроектирован на основе идеи FSD.
+В качестве БД выбран postgresql, S3 совместимое хранилище - minio. Работа БД, Minio, Redis координирована с помощью docker-compose.
+Реализованы аутентификация с логином, паролем и с помощью google аутентификации, пересылка сообщений и файлов между пользователями, их предпросмотр, проверка кто из друзей находится онлайн и т.д.
+
+Приложение было создано для обучения, поэтому многие детали интерфейса и работы приложения не реализованы из-за технической простоты и трудоемкости. UI приложения также реализован с вниманием на изучение используемых технологий, а не удобство пользователя.
+#.env
+Для .env файла надо задать следующие переменые:
+JWT_SECRET=
+POSTGRES_USER=app_user
+POSTGRES_PASSWORD=secret
+POSTGRES_DB=app_db
+POSTGRES_HOST=localhost
+POSTGRES_CONTAINER_NAME=postgres16
+POSTGRES_IMAGE=postgres:16
+POSTGRES_PORT=5433
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+GOOGLE_REFRESH_TOKEN=
+JWT_EXPIRES_IN=900*4
+EMAIL_SERVER_HOST=smtp.gmail.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=
+SMTP_USER=
+SMTP_PASS=
+EMAIL_SERVER_PASSWORD=
+FRONTEND_URL=http://localhost:4200
+BACKEND_URL=http://localhost:3000
+S3_ENDPOINT=http://localhost:9000
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+S3_BUCKET=social-net-files
+REDIS_URL=redis://localhost:6379
